@@ -17,6 +17,12 @@ const SOURCES = {
     open: 'https://www.bing.com/search?q=',
   },
 };
+// Só na skill (CORS bloqueia no navegador): o seletor "Fonte" não lista estas. open pode ser função(data).
+const SKILL_SOURCES = {
+  amazon: { label: 'Amazon', open: (d) => `https://www.${d.marketplace || 'amazon.it'}/s?k=` },
+  tiktok: { label: 'TikTok', open: 'https://www.tiktok.com/search?q=' },
+  trends: { label: 'Google Trends', open: 'https://trends.google.com/trends/explore?q=' },
+};
 const GROUPS = ['questions', 'prepositions', 'comparisons', 'alphabeticals', 'numbers', 'related'];
 const LABELS = {
   questions: 'Perguntas', prepositions: 'Preposições', comparisons: 'Comparações',
@@ -192,12 +198,16 @@ function drawWheel(el, kw, group) {
 // ---------- tabela / extras ----------
 
 const srcOf = (src) => (SOURCES[src] ? src : 'google');
-const srcLabel = (src) => SOURCES[srcOf(src)].label;
+const srcMeta = (src) => SOURCES[src] || SKILL_SOURCES[src] || SOURCES.google;
+const srcLabel = (src) => srcMeta(src).label;
 // dados da skill sem fonte real (sugestões geradas pelo Claude): sem src, links caem numa busca no Google
 const isGenerated = (data) => data.source === 'claude-generated';
 const dataLabel = (data) => (isGenerated(data) ? 'Gerado pelo Claude' : srcLabel(data.src));
-const dataSrc = (data) => (isGenerated(data) ? 'claude-generated' : srcOf(data.src));
-const openUrl = (q) => SOURCES[srcOf(state.data.src)].open + encodeURIComponent(q);
+const dataSrc = (data) => (isGenerated(data) ? 'claude-generated' : SKILL_SOURCES[data.src] ? data.src : srcOf(data.src));
+const openUrl = (q) => {
+  const open = srcMeta(state.data.src).open;
+  return (typeof open === 'function' ? open(state.data) : open) + encodeURIComponent(q);
+};
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
 
 function drawTable(el, group) {
@@ -338,8 +348,8 @@ function init() {
   if (window.__WHEEL_DATA__) {
     const data = window.__WHEEL_DATA__;
     if (!isGenerated(data)) {
-      data.src = srcOf(data.src);
-      $('#src').value = data.src;
+      data.src = dataSrc(data);
+      if (SOURCES[data.src]) $('#src').value = data.src;
     }
     $('#q').value = data.keyword;
     $('#hl').value = data.hl;
