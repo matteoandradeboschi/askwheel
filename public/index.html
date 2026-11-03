@@ -21,7 +21,7 @@
   <section id="tab-search" class="tab">
     <div class="hero">
       <h1>O que as pessoas buscam na internet?</h1>
-      <p class="muted">Digite uma palavra-chave e veja perguntas, preposições, comparações e buscas relacionadas do autocomplete do Google, YouTube, Google Shopping ou Bing. Grátis, sem cadastro.</p>
+      <p class="muted">Digite uma palavra-chave e veja perguntas, preposições, comparações e buscas relacionadas do autocomplete do Google, YouTube, Google Shopping ou Bing, e as perguntas do People Also Ask do Google. Grátis, sem cadastro.</p>
       <form id="form" class="search">
         <input id="q" name="q" type="search" placeholder="ex.: caffè, juros compostos, bicicleta elétrica" autocomplete="off" required>
         <select id="src" name="src" aria-label="Fonte">
@@ -29,6 +29,7 @@
           <option value="youtube">YouTube</option>
           <option value="shopping">Google Shopping</option>
           <option value="bing">Bing</option>
+          <option value="paa">People Also Ask (Google)</option>
         </select>
         <select id="hl" name="hl" aria-label="Idioma">
           <option value="pt">Português</option>
@@ -49,6 +50,14 @@
         <button id="go" type="submit">Buscar</button>
       </form>
       <div id="status" class="status" hidden><div class="bar"><i></i></div><span></span></div>
+      <div id="paa-help" class="paa-help" hidden>
+        <p>O Google só mostra o People Also Ask na própria página de resultados, então a coleta roda lá, por um favorito (bookmarklet). No computador:</p>
+        <ol>
+          <li>Arraste este botão para a barra de favoritos (só na primeira vez): <a id="paa-bm" class="bm" href="#">AskWheel PAA</a></li>
+          <li>Clique em <b>Buscar</b>: a busca abre no Google numa aba nova.</li>
+          <li>Lá, clique no favorito <b>AskWheel PAA</b>. Ele abre as perguntas (uns 20 segundos) e volta para cá com a roda.</li>
+        </ol>
+      </div>
     </div>
 
     <div id="results" hidden>
@@ -101,7 +110,8 @@
       <li>Os resultados variam por idioma, país e momento.</li>
       <li>Bloqueadores de anúncio podem impedir as consultas.</li>
       <li>Amazon, TikTok e Google Trends não estão aqui: bloqueiam consultas do navegador (CORS). Existem só na skill para Claude Code.</li>
-      <li>Instagram exige login e People Also Ask exige um navegador automatizado.</li>
+      <li>Instagram exige login.</li>
+      <li>People Also Ask só existe na página de resultados do Google: a coleta roda lá, pelo favorito <b>AskWheel PAA</b>. Precisa de computador (favoritos arrastáveis) e só funciona quando o Google mostra a caixa.</li>
     </ul>
     <h2>Privacidade</h2>
     <p>O site é estático: não tem servidor, cadastro nem analytics. As consultas vão do seu navegador direto para a fonte escolhida (Google, YouTube, Google Shopping ou Bing).</p>

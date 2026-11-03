@@ -17,16 +17,17 @@ const SOURCES = {
     open: 'https://www.bing.com/search?q=',
   },
 };
-// Só na skill (CORS bloqueia no navegador): o seletor "Fonte" não lista estas. open pode ser função(data).
+// Coletadas fora do JSONP: na skill (CORS bloqueia no navegador) ou pelo bookmarklet paa.js. open pode ser função(data).
 const SKILL_SOURCES = {
   amazon: { label: 'Amazon', prep: 'na', open: (d) => `https://www.${d.marketplace || 'amazon.it'}/s?k=` },
   tiktok: { label: 'TikTok', open: 'https://www.tiktok.com/search?q=' },
   trends: { label: 'Google Trends', open: 'https://trends.google.com/trends/explore?q=' },
+  paa: { label: 'Google (People Also Ask)', open: 'https://www.google.com/search?q=' },
 };
-const GROUPS = ['questions', 'prepositions', 'comparisons', 'alphabeticals', 'numbers', 'related'];
+const GROUPS = ['questions', 'prepositions', 'comparisons', 'alphabeticals', 'numbers', 'related', 'paa'];
 const LABELS = {
   questions: 'Perguntas', prepositions: 'Preposições', comparisons: 'Comparações',
-  alphabeticals: 'Alfabética', numbers: 'Números', related: 'Relacionadas', extras: 'Extras (Claude)',
+  alphabeticals: 'Alfabética', numbers: 'Números', related: 'Relacionadas', paa: 'People Also Ask', extras: 'Extras (Claude)',
 };
 const WHEEL_LEAVES = 6;
 const PALETTE = ['#2f5fd0', '#0f9d8a', '#d9822b', '#c2417a', '#7a52c7', '#3d8f3d', '#c74b3b', '#1f8fbf', '#a6782c', '#5a6b7d'];
@@ -119,10 +120,13 @@ async function collect(kw, hl, gl, src, onProgress) {
 
 function drawWheel(el, kw, group) {
   el.replaceChildren();
-  const mods = group.modifiers.filter((m) => m.items.length);
+  const mods = group.modifiers.filter(keepMod(group));
   if (!mods.length) { el.innerHTML = '<p class="empty">Nenhuma sugestão neste grupo.</p>'; return; }
   // Como no ATP: a roda mostra só as primeiras sugestões de cada modificador; a tabela mostra todas.
-  const tree = { name: kw, children: mods.map((m) => ({ name: m.name ?? kw, children: m.items.slice(0, WHEEL_LEAVES).map((t) => ({ name: t, value: 1 })) })) };
+  // Em grupos tree (PAA) o modificador já é uma pergunta: sem filhos, vira folha.
+  const tree = { name: kw, children: mods.map((m) => (m.items.length
+    ? { name: m.name ?? kw, children: m.items.slice(0, WHEEL_LEAVES).map((t) => ({ name: t, value: 1 })) }
+    : { name: m.name, value: 1 })) };
 
   const size = 760, r = size / 6;
   const color = d3.scaleOrdinal(mods.map((m) => m.name), PALETTE.concat(PALETTE, PALETTE));
@@ -209,11 +213,12 @@ const openUrl = (q) => {
   return (typeof open === 'function' ? open(state.data) : open) + encodeURIComponent(q);
 };
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+const keepMod = (group) => (m) => m.items.length || group.tree;
 
 function drawTable(el, group) {
-  const mods = group.modifiers.filter((m) => m.items.length);
+  const mods = group.modifiers.filter(keepMod(group));
   el.innerHTML = mods.length
-    ? mods.map((m) => `<div class="block"><h3>${esc(m.name ?? 'relacionadas')} <small>${m.items.length}</small></h3><ol>${
+    ? mods.map((m) => `<div class="block"><h3>${group.tree ? `<a href="${openUrl(m.name)}" target="_blank" rel="noopener">${esc(m.name)}</a>` : esc(m.name ?? 'relacionadas')} <small>${m.items.length}</small></h3><ol>${
         m.items.map((t) => `<li><a href="${openUrl(t)}" target="_blank" rel="noopener">${esc(t)}</a></li>`).join('')
       }</ol></div>`).join('')
     : '<p class="empty">Nenhuma sugestão neste grupo.</p>';
@@ -230,7 +235,7 @@ function drawExtras(el, extras) {
 function render() {
   const { data } = state;
   const total = GROUPS.reduce((n, k) => n + (data.groups[k]?.count || 0), 0);
-  $('#res-title').textContent = `${total} sugestões para “${data.keyword}” · ${dataLabel(data)}`;
+  $('#res-title').textContent = `${total} ${data.src === 'paa' ? 'perguntas' : 'sugestões'} para “${data.keyword}” · ${dataLabel(data)}`;
   const keys = GROUPS.filter((k) => data.groups[k]).concat(data.extras ? ['extras'] : []);
   $('#groups').innerHTML = keys.map((k) => `<button data-group="${k}" aria-pressed="${k === state.group}">${
     k === 'extras' ? '' : `<b>${data.groups[k].count}</b>`}${LABELS[k]}</button>`).join('');
@@ -279,7 +284,10 @@ async function search(kw, hl, gl, src) {
 
 function toCsv(data) {
   const rows = [['grupo', 'modificador', 'sugestao', 'fonte']];
-  for (const k of GROUPS) for (const m of data.groups[k]?.modifiers || []) for (const t of m.items) rows.push([k, m.name ?? '', t, dataSrc(data)]);
+  for (const k of GROUPS) for (const m of data.groups[k]?.modifiers || []) {
+    if (data.groups[k].tree) rows.push([k, '', m.name, dataSrc(data)]);
+    for (const t of m.items) rows.push([k, m.name ?? '', t, dataSrc(data)]);
+  }
   return rows.map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n');
 }
 
@@ -304,8 +312,35 @@ function selectTab(name) {
 }
 
 function installCommand() {
-  const origin = /^https?:/.test(location.protocol) ? location.origin + location.pathname.replace(/[^/]*$/, '') : 'https://SEU-SITE.pages.dev/';
+  const origin = siteUrl();
   return `d=~/.claude/skills/askwheel; mkdir -p "$d/site" && for f in SKILL.md collect.py render.py; do curl -fsSL ${origin}skill/$f -o "$d/$f"; done && for f in index.html app.js style.css modifiers.json; do curl -fsSL ${origin}$f -o "$d/site/$f"; done && echo "AskWheel skill instalada em $d"`;
+}
+
+const siteUrl = () => (/^https?:/.test(location.protocol) ? location.origin + location.pathname.replace(/[^/]*$/, '') : 'https://SEU-SITE.pages.dev/');
+
+// O código do bookmarklet fica legível em paa.js; aqui vira um link javascript: com o endereço do site.
+async function setupBookmarklet() {
+  try {
+    const code = (await fetch('paa.js').then((r) => r.text())).replace('__SITE__', siteUrl());
+    $('#paa-bm').href = 'javascript:' + encodeURIComponent(code);
+  } catch { $('#paa-bm').replaceWith('(indisponível nesta cópia offline)'); }
+  $('#paa-bm')?.addEventListener('click', (e) => { e.preventDefault(); setStatus('Arraste o botão para a barra de favoritos em vez de clicar nele.', 0); });
+}
+
+// Dados que o bookmarklet traz do Google em #paa=. Vêm de fora: só passam se tiverem a forma esperada.
+function readPaaHash() {
+  if (!location.hash.startsWith('#paa=')) return null;
+  const raw = location.hash.slice(5);
+  history.replaceState(null, '', location.pathname);
+  try {
+    const d = JSON.parse(decodeURIComponent(raw));
+    const mods = d?.groups?.paa?.modifiers;
+    if (typeof d.keyword !== 'string' || !Array.isArray(mods)) return null;
+    const str = (x) => typeof x === 'string';
+    const modifiers = mods.filter((m) => str(m?.name)).map((m) => ({ name: m.name, items: (m.items || []).filter(str) }));
+    const count = modifiers.reduce((n, m) => n + 1 + m.items.length, 0);
+    return { keyword: d.keyword, hl: String(d.hl || ''), gl: String(d.gl || ''), src: 'paa', source: 'google-paa', collected_at: String(d.collected_at || ''), groups: { paa: { tree: true, modifiers, count } } };
+  } catch { return null; }
 }
 
 function defaults() {
@@ -323,12 +358,21 @@ function init() {
   $('#gl').value = params.get('gl') || d.gl;
   $('#src').value = srcOf(params.get('src'));
   $('#install-cmd').textContent = installCommand();
+  setupBookmarklet();
 
   document.querySelectorAll('.tabs button').forEach((b) => b.addEventListener('click', () => selectTab(b.dataset.tab)));
+  const togglePaa = () => ($('#paa-help').hidden = $('#src').value !== 'paa');
+  $('#src').addEventListener('change', togglePaa);
   $('#form').addEventListener('submit', (e) => {
     e.preventDefault();
     const kw = $('#q').value.trim();
-    if (kw) search(kw, $('#hl').value, $('#gl').value, $('#src').value);
+    if (!kw) return;
+    if ($('#src').value === 'paa') {
+      const q = new URLSearchParams({ q: kw, hl: $('#hl').value, gl: $('#gl').value });
+      window.open(`https://www.google.com/search?${q}`, '_blank', 'noopener');
+      return setStatus('Busca aberta no Google. Clique lá no favorito AskWheel PAA.', 0);
+    }
+    search(kw, $('#hl').value, $('#gl').value, $('#src').value);
   });
   $('#groups').addEventListener('click', (e) => {
     const b = e.target.closest('button');
@@ -346,7 +390,14 @@ function init() {
   });
   document.querySelectorAll('.copy').forEach((b) => b.addEventListener('click', () => copy($(`#${b.dataset.copy}`).textContent, b)));
 
-  if (window.__WHEEL_DATA__) {
+  const paa = readPaaHash();
+  if (paa) {
+    $('#q').value = paa.keyword;
+    $('#src').value = 'paa';
+    for (const k of ['hl', 'gl']) if ([...$(`#${k}`).options].some((o) => o.value === paa[k])) $(`#${k}`).value = paa[k];
+    show(paa);
+    setStatus(`${paa.groups.paa.count} perguntas do People Also Ask, coletadas no Google pelo favorito.`, 1);
+  } else if (window.__WHEEL_DATA__) {
     const data = window.__WHEEL_DATA__;
     if (!isGenerated(data)) {
       data.src = dataSrc(data);

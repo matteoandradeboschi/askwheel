@@ -1,11 +1,12 @@
 # AskWheel
 
-Free, static search-listening site (AnswerThePublic-style): keyword + modifiers → autocomplete suggestions from one chosen source (Google, YouTube, Google Shopping, Bing) via JSONP from the visitor's browser → sunburst (D3) + table. Hosted on Cloudflare Pages (free). No backend, no analytics. Amazon, TikTok, Google Trends block browser requests (CORS): the site can't offer them (would need a proxy), but the skill supports them (Python, no CORS); People Also Ask/Instagram aren't reachable without a headless browser or login.
+Free, static search-listening site (AnswerThePublic-style): keyword + modifiers → autocomplete suggestions from one chosen source (Google, YouTube, Google Shopping, Bing) via JSONP from the visitor's browser → sunburst (D3) + table. Hosted on Cloudflare Pages (free). No backend, no analytics. Amazon, TikTok, Google Trends block browser requests (CORS): the site can't offer them (would need a proxy), but the skill supports them (Python, no CORS); Instagram isn't reachable without login. People Also Ask needs a real Google results page (JS-rendered), so the site collects it with a bookmarklet (`public/paa.js`) the visitor runs on google.com, which sends data back via `#paa=` in the URL.
 
 ## Layout
 
 - `public/` is the deploy root (upload as-is to Cloudflare Pages).
 - `public/app.js`: collection (`buildPlan`, `jsonp`, `assemble`), wheel, table, extras, UI. Also renders preloaded data from `window.__WHEEL_DATA__` (used by the skill's standalone HTML).
+- `public/paa.js`: PAA bookmarklet source. `app.js` fetches it, replaces `'__SITE__'` with the site URL and sets it as the `javascript:` link. No `//` comments (it becomes a URL). Depends on Google's DOM (`.related-question-pair[data-q]`, `[role=button][aria-expanded]`): breaks if Google changes it.
 - `public/modifiers.json`: modifiers per language. Single source for site and skill.
 - `public/skill/`: optional Claude Code skill, served by the site and installed with the command in the **Skill p/ Claude Code** tab.
   - `collect.py`: same collection logic as `app.js` in Python (stdlib only). Also has skill-only sources `amazon`, `tiktok`, `trends` (`LOCAL_SOURCES`); `app.js` knows them only in `SKILL_SOURCES` (label/link for preloaded data), not in the "Fonte" selector.

@@ -1,12 +1,13 @@
 # AskWheel
 
-Alternativa grátis de *search listening*: digite uma palavra-chave e veja perguntas, preposições, comparações, a–z, 0–9 e buscas relacionadas do autocomplete do Google, numa roda (sunburst) e numa tabela. Site estático, sem backend: as consultas vão do navegador do visitante direto para o Google (JSONP).
+Alternativa grátis de *search listening*: digite uma palavra-chave e veja perguntas, preposições, comparações, a–z, 0–9 e buscas relacionadas do autocomplete do Google, YouTube, Google Shopping ou Bing, e as perguntas do People Also Ask do Google, numa roda (sunburst) e numa tabela. Site estático, sem backend: as consultas vão do navegador do visitante direto para a fonte (JSONP). O People Also Ask é coletado por um favorito (bookmarklet) que roda na própria página de resultados do Google.
 
 ## Estrutura
 
 ```
 public/                 # tudo que vai para o Cloudflare Pages
   index.html style.css app.js
+  paa.js                # bookmarklet do People Also Ask
   modifiers.json        # modificadores por idioma (fonte única: site + skill)
   skill/                # skill opcional para Claude Code, servida pelo próprio site
     SKILL.md collect.py render.py
