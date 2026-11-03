@@ -1,6 +1,6 @@
 # AskWheel
 
-Alternativa grátis de *search listening*: digite uma palavra-chave e veja perguntas, preposições, comparações, a–z, 0–9 e buscas relacionadas do autocomplete do Google, YouTube, Google Shopping ou Bing, e as perguntas do People Also Ask do Google, numa roda (sunburst) e numa tabela. Site estático, sem backend: as consultas vão do navegador do visitante direto para a fonte (JSONP). O People Also Ask é coletado por um favorito (bookmarklet) que roda na própria página de resultados do Google.
+Alternativa grátis de *search listening*: digite uma palavra-chave e veja, numa busca só, perguntas, preposições, comparações, a–z, 0–9 e buscas relacionadas do autocomplete do Google e do Google Shopping (roda + tabela) e o mapa do People Also Ask do Google. Site estático, sem backend: as consultas vão do navegador do visitante direto para a fonte (JSONP). O People Also Ask é coletado por um favorito (bookmarklet) que roda na própria página de resultados do Google.
 
 ## Estrutura
 

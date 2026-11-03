@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>AskWheel</title>
-<meta name="description" content="Veja o que as pessoas buscam no Google, YouTube, Google Shopping e Bing sobre qualquer palavra-chave. Grátis, sem cadastro.">
+<meta name="description" content="Veja o que as pessoas buscam no Google e no Google Shopping, e o People Also Ask, sobre qualquer palavra-chave. Grátis, sem cadastro.">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -21,16 +21,9 @@
   <section id="tab-search" class="tab">
     <div class="hero">
       <h1>O que as pessoas buscam na internet?</h1>
-      <p class="muted">Digite uma palavra-chave e veja perguntas, preposições, comparações e buscas relacionadas do autocomplete do Google, YouTube, Google Shopping ou Bing, e as perguntas do People Also Ask do Google. Grátis, sem cadastro.</p>
+      <p class="muted">Digite uma palavra-chave e veja, numa busca só, o autocomplete do Google e do Google Shopping (perguntas, preposições, comparações, a–z, 0–9, relacionadas) e o mapa do People Also Ask. Grátis, sem cadastro.</p>
       <form id="form" class="search">
         <input id="q" name="q" type="search" placeholder="ex.: caffè, juros compostos, bicicleta elétrica" autocomplete="off" required>
-        <select id="src" name="src" aria-label="Fonte">
-          <option value="google">Google</option>
-          <option value="youtube">YouTube</option>
-          <option value="shopping">Google Shopping</option>
-          <option value="bing">Bing</option>
-          <option value="paa">People Also Ask (Google)</option>
-        </select>
         <select id="hl" name="hl" aria-label="Idioma">
           <option value="pt">Português</option>
           <option value="it">Italiano</option>
@@ -50,32 +43,29 @@
         <button id="go" type="submit">Buscar</button>
       </form>
       <div id="status" class="status" hidden><div class="bar"><i></i></div><span></span></div>
-      <div id="paa-help" class="paa-help" hidden>
-        <p>O Google só mostra o People Also Ask na própria página de resultados, então a coleta roda lá, por um favorito (bookmarklet). No computador:</p>
-        <ol>
-          <li>Arraste este botão para a barra de favoritos (só na primeira vez): <a id="paa-bm" class="bm" href="#">AskWheel PAA</a></li>
-          <li>Clique em <b>Buscar</b>: a busca abre no Google numa aba nova.</li>
-          <li>Lá, clique no favorito <b>AskWheel PAA</b>. Ele abre as perguntas (uns 20 segundos) e volta para cá com a roda.</li>
-        </ol>
-      </div>
     </div>
 
     <div id="results" hidden>
       <div class="res-head">
         <h2 id="res-title"></h2>
-        <div class="actions">
-          <div class="seg" role="group" aria-label="Visualização">
-            <button data-view="wheel" aria-pressed="true">Roda</button>
-            <button data-view="table" aria-pressed="false">Tabela</button>
-          </div>
-          <button id="csv" class="ghost">Baixar CSV</button>
-          <button id="share" class="ghost">Copiar link</button>
-        </div>
+        <div class="actions"><button id="share" class="ghost">Copiar link</button></div>
       </div>
-      <div id="groups" class="chips"></div>
-      <div id="wheel" class="wheel"></div>
-      <div id="table" class="table" hidden></div>
-      <div id="extras" class="extras" hidden></div>
+      <div id="panels"></div>
+      <section id="paa" class="panel">
+        <div class="res-head">
+          <h2>People Also Ask <small id="paa-count"></small></h2>
+          <div class="actions"><button id="paa-csv" class="ghost" hidden>Baixar CSV</button></div>
+        </div>
+        <div id="paa-help" class="paa-help">
+          <p>O Google só mostra o People Also Ask na página de resultados dele, então essa parte é coletada lá, por um favorito (bookmarklet). No computador:</p>
+          <ol>
+            <li>Arraste este botão para a barra de favoritos (só na primeira vez): <a id="paa-bm" class="bm" href="#">AskWheel PAA</a></li>
+            <li><a id="paa-open" target="_blank" rel="noopener" href="#"></a> e, lá, clique no favorito <b>AskWheel PAA</b>.</li>
+            <li>Em uns 20 segundos você volta para cá com tudo: as rodas e o mapa de perguntas.</li>
+          </ol>
+        </div>
+        <div id="paa-map" class="map" hidden></div>
+      </section>
     </div>
   </section>
 
@@ -100,7 +90,8 @@
     <h1>Como funciona</h1>
     <ol>
       <li>A palavra-chave é combinada com modificadores no idioma escolhido: perguntas (<i>como, por que, qual…</i>), preposições (<i>para, com, sem…</i>), comparações (<i>vs, ou…</i>), letras a–z e números 0–9.</li>
-      <li>Cada combinação é enviada ao autocomplete da fonte escolhida (Google, YouTube, Google Shopping ou Bing) <b>direto do seu navegador</b> (cerca de 70 consultas).</li>
+      <li>Cada combinação é enviada ao autocomplete do Google e do Google Shopping <b>direto do seu navegador</b> (cerca de 140 consultas).</li>
+      <li>O People Also Ask é lido na própria página de resultados do Google pelo favorito <b>AskWheel PAA</b>, que abre as perguntas e as traz como um mapa.</li>
       <li>As sugestões são agrupadas por modificador. O que não se encaixa em nenhum vai para <b>Relacionadas</b>.</li>
     </ol>
     <h2>Limitações</h2>
@@ -114,12 +105,12 @@
       <li>People Also Ask só existe na página de resultados do Google: a coleta roda lá, pelo favorito <b>AskWheel PAA</b>. Precisa de computador (favoritos arrastáveis) e só funciona quando o Google mostra a caixa.</li>
     </ul>
     <h2>Privacidade</h2>
-    <p>O site é estático: não tem servidor, cadastro nem analytics. As consultas vão do seu navegador direto para a fonte escolhida (Google, YouTube, Google Shopping ou Bing).</p>
+    <p>O site é estático: não tem servidor, cadastro nem analytics. As consultas vão do seu navegador direto para o Google.</p>
     <p class="muted">Inspirado em ferramentas de <i>search listening</i> como o AnswerThePublic. Sem afiliação.</p>
   </section>
 </main>
 
-<footer class="foot muted">AskWheel · grátis e de código aberto · dados do autocomplete de Google, YouTube, Google Shopping e Bing</footer>
+<footer class="foot muted">AskWheel · grátis e de código aberto · dados do autocomplete do Google e do Google Shopping e do People Also Ask</footer>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
 <script src="app.js"></script>
