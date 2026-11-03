@@ -9,13 +9,13 @@ Mesma coleta do site AskWheel, mais o que só o Claude faz. O HTML final reaprov
 
 ## Entrada
 
-`$ARGUMENTS` = `<keyword> [--hl it|pt|en|es] [--gl it|br|pt|us|gb|es|fr|de]`. Sem `--hl`/`--gl`: deduza do idioma da keyword; na dúvida use `it`/`it`.
+`$ARGUMENTS` = `<keyword> [--hl it|pt|en|es] [--gl it|br|pt|us|gb|es|fr|de] [--source google|youtube|shopping|bing]`. Sem `--hl`/`--gl`: deduza do idioma da keyword; na dúvida use `it`/`it`. Sem `--source`: `google`. Uma fonte por execução; Amazon, TikTok, Instagram e People Also Ask não são suportados.
 
 ## Passos
 
 1. **Coletar** (dados reais, ~70 consultas, ~10 s):
    ```bash
-   python3 <pasta-da-skill>/collect.py "<keyword>" --hl <hl> --gl <gl> -o <scratch>/dados.json
+   python3 <pasta-da-skill>/collect.py "<keyword>" --hl <hl> --gl <gl> --source <src> -o <scratch>/dados.json
    ```
    Se sair com erro ou com quase tudo vazio (bloqueio/sem rede): avise o usuário e gere você mesmo as sugestões no mesmo formato de `dados.json`, com `"source": "claude-generated"`. Nunca apresente sugestões geradas como dados do Google.
 
@@ -40,7 +40,7 @@ Mesma coleta do site AskWheel, mais o que só o Claude faz. O HTML final reaprov
    ```
    `slug` = keyword minúscula, sem acentos, com hífens.
 
-4. **Entregar**: o arquivo HTML (SendUserFile com `display: "render"` quando existir). No chat, só: caminho, contagem por grupo e as 3 pautas mais fortes. Não repita as listas inteiras.
+4. **Entregar**: o arquivo HTML (SendUserFile com `display: "render"` quando existir). No chat, só: caminho, fonte, contagem por grupo e as 3 pautas mais fortes. Não repita as listas inteiras.
 
 ## Notas
 
