@@ -1,6 +1,6 @@
 # AskWheel
 
-Free, static search-listening site (AnswerThePublic-style): keyword + modifiers → autocomplete suggestions from one chosen source (Google, YouTube, Google Shopping, Bing) via JSONP from the visitor's browser → sunburst (D3) + table. Hosted on Cloudflare Pages (free). No backend, no analytics. Amazon, TikTok, Google Trends block browser requests (CORS) and would need a proxy; People Also Ask/Instagram aren't reachable without a headless browser or login.
+Free, static search-listening site (AnswerThePublic-style): keyword + modifiers → autocomplete suggestions from one chosen source (Google, YouTube, Google Shopping, Bing) via JSONP from the visitor's browser → sunburst (D3) + table. Hosted on Cloudflare Pages (free). No backend, no analytics. Amazon, TikTok, Google Trends block browser requests (CORS): the site can't offer them (would need a proxy), but the skill supports them (Python, no CORS); People Also Ask/Instagram aren't reachable without a headless browser or login.
 
 ## Layout
 
@@ -8,7 +8,7 @@ Free, static search-listening site (AnswerThePublic-style): keyword + modifiers 
 - `public/app.js`: collection (`buildPlan`, `jsonp`, `assemble`), wheel, table, extras, UI. Also renders preloaded data from `window.__WHEEL_DATA__` (used by the skill's standalone HTML).
 - `public/modifiers.json`: modifiers per language. Single source for site and skill.
 - `public/skill/`: optional Claude Code skill, served by the site and installed with the command in the **Skill p/ Claude Code** tab.
-  - `collect.py`: same collection logic as `app.js` in Python (stdlib only).
+  - `collect.py`: same collection logic as `app.js` in Python (stdlib only). Also has skill-only sources `amazon`, `tiktok`, `trends` (`LOCAL_SOURCES`); `app.js` knows them only in `SKILL_SOURCES` (label/link for preloaded data), not in the "Fonte" selector.
   - `render.py`: inlines `site/index.html`, `style.css`, `app.js`, `modifiers.json` + data (+ Claude extras) into one HTML.
 
 ## Rules
