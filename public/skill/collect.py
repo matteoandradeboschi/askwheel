@@ -67,7 +67,7 @@ def parse_bing(data):
 
 # fonte: (endpoint, params(hl, gl), parser)
 SOURCES = {
-    "google": (ENDPOINT, lambda hl, gl: gparams(hl, gl), parse_google),
+    "google": (ENDPOINT, gparams, parse_google),
     "youtube": (ENDPOINT, lambda hl, gl: gparams(hl, gl, "yt"), parse_google),
     "shopping": (ENDPOINT, lambda hl, gl: gparams(hl, gl, "sh"), parse_google),
     "bing": (BING_ENDPOINT, lambda hl, gl: {"mkt": f"{hl}-{gl.upper()}"}, parse_bing),

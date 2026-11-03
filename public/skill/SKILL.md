@@ -1,6 +1,6 @@
 ---
 name: askwheel
-description: Gera um relatório de search listening (estilo AnswerThePublic) para uma palavra-chave — perguntas, preposições, comparações, a–z, 0–9 e relacionadas, com dados reais do autocomplete do Google — e acrescenta análise do Claude (intenção, clusters, pautas, FAQs) num HTML único. Use quando o usuário rodar /askwheel <keyword>, pedir "o que as pessoas perguntam sobre X", "ideias de conteúdo para X", "keyword research grátis" ou "relatório AskWheel".
+description: Gera um relatório de search listening (estilo AnswerThePublic) para uma palavra-chave — perguntas, preposições, comparações, a–z, 0–9 e relacionadas, com dados reais do autocomplete (Google, YouTube, Google Shopping ou Bing) — e acrescenta análise do Claude (intenção, clusters, pautas, FAQs) num HTML único. Use quando o usuário rodar /askwheel <keyword>, pedir "o que as pessoas perguntam sobre X", "ideias de conteúdo para X", "keyword research grátis" ou "relatório AskWheel".
 ---
 
 # AskWheel
@@ -17,7 +17,7 @@ Mesma coleta do site AskWheel, mais o que só o Claude faz. O HTML final reaprov
    ```bash
    python3 <pasta-da-skill>/collect.py "<keyword>" --hl <hl> --gl <gl> --source <src> -o <scratch>/dados.json
    ```
-   Se sair com erro ou com quase tudo vazio (bloqueio/sem rede): avise o usuário e gere você mesmo as sugestões no mesmo formato de `dados.json`, com `"source": "claude-generated"`. Nunca apresente sugestões geradas como dados do Google.
+   Se sair com erro ou com quase tudo vazio (bloqueio/sem rede): avise o usuário e gere você mesmo as sugestões no mesmo formato de `dados.json`, com `"source": "claude-generated"`. Nunca apresente sugestões geradas como dados reais de nenhuma fonte.
 
 2. **Analisar**: leia `dados.json` (`groups.<grupo>.modifiers[].items[]`). Escreva `<scratch>/extras.json`:
    ```json

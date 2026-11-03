@@ -14,7 +14,7 @@ Free, static search-listening site (AnswerThePublic-style): keyword + modifiers 
 ## Rules
 
 - Grouping logic exists twice (`app.js` `assemble` and `collect.py` `assemble`): change both together.
-- Keep both on the same endpoint params (`SOURCES` in each file: `client=chrome`, `ie/oe=utf-8`, `ds=yt|sh`; Bing `qsonhs.aspx`, skipping `Type: "SC"`). Python omits only the JSONP callback.
+- Keep both on the same endpoint params (`SOURCES` in each file: `client=chrome`, `ie/oe=utf-8`, `ds=yt|sh`; Bing `qsonhs.aspx`, skipping `Type: "SC"`). Python omits only the JSONP wiring: `callback=` for Google/YouTube/Shopping, `type=cb&cb=` for Bing (with `type=cb` Bing returns JS, not JSON).
 - No build step, no npm deps. D3 from cdnjs pinned to `7.9.0`.
 - UI copy in Portuguese, sentence case.
 

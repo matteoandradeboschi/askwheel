@@ -4,10 +4,11 @@
 const ENDPOINT = 'https://suggestqueries.google.com/complete/search';
 // Fontes: url(q, hl, gl, cb) monta o JSONP; parse(data) devolve a lista; open é o prefixo p/ abrir a sugestão.
 const goog = (ds) => (q, hl, gl, cb) => `${ENDPOINT}?client=chrome&ie=utf-8&oe=utf-8&hl=${hl}&gl=${gl}${ds}&q=${encodeURIComponent(q)}&callback=${cb}`;
+const first = (d) => d?.[1];
 const SOURCES = {
-  google: { label: 'Google', url: goog(''), parse: (d) => d?.[1], open: 'https://www.google.com/search?q=' },
-  youtube: { label: 'YouTube', url: goog('&ds=yt'), parse: (d) => d?.[1], open: 'https://www.youtube.com/results?search_query=' },
-  shopping: { label: 'Google Shopping', url: goog('&ds=sh'), parse: (d) => d?.[1], open: 'https://www.google.com/search?tbm=shop&q=' },
+  google: { label: 'Google', url: goog(''), parse: first, open: 'https://www.google.com/search?q=' },
+  youtube: { label: 'YouTube', url: goog('&ds=yt'), parse: first, open: 'https://www.youtube.com/results?search_query=' },
+  shopping: { label: 'Google Shopping', url: goog('&ds=sh'), parse: first, open: 'https://www.google.com/search?tbm=shop&q=' },
   bing: {
     label: 'Bing',
     url: (q, hl, gl, cb) => `https://api.bing.com/qsonhs.aspx?type=cb&cb=${cb}&mkt=${hl}-${gl.toUpperCase()}&q=${encodeURIComponent(q)}`,
@@ -192,6 +193,10 @@ function drawWheel(el, kw, group) {
 
 const srcOf = (src) => (SOURCES[src] ? src : 'google');
 const srcLabel = (src) => SOURCES[srcOf(src)].label;
+// dados da skill sem fonte real (sugestões geradas pelo Claude): sem src, links caem numa busca no Google
+const isGenerated = (data) => data.source === 'claude-generated';
+const dataLabel = (data) => (isGenerated(data) ? 'Gerado pelo Claude' : srcLabel(data.src));
+const dataSrc = (data) => (isGenerated(data) ? 'claude-generated' : srcOf(data.src));
 const openUrl = (q) => SOURCES[srcOf(state.data.src)].open + encodeURIComponent(q);
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
 
@@ -215,7 +220,7 @@ function drawExtras(el, extras) {
 function render() {
   const { data } = state;
   const total = GROUPS.reduce((n, k) => n + (data.groups[k]?.count || 0), 0);
-  $('#res-title').textContent = `${total} sugestões para “${data.keyword}” · ${srcLabel(data.src)}`;
+  $('#res-title').textContent = `${total} sugestões para “${data.keyword}” · ${dataLabel(data)}`;
   const keys = GROUPS.filter((k) => data.groups[k]).concat(data.extras ? ['extras'] : []);
   $('#groups').innerHTML = keys.map((k) => `<button data-group="${k}" aria-pressed="${k === state.group}">${
     k === 'extras' ? '' : `<b>${data.groups[k].count}</b>`}${LABELS[k]}</button>`).join('');
@@ -262,8 +267,8 @@ async function search(kw, hl, gl, src) {
 }
 
 function toCsv(data) {
-  const rows = [['fonte', 'grupo', 'modificador', 'sugestao']];
-  for (const k of GROUPS) for (const m of data.groups[k]?.modifiers || []) for (const t of m.items) rows.push([srcOf(data.src), k, m.name ?? '', t]);
+  const rows = [['grupo', 'modificador', 'sugestao', 'fonte']];
+  for (const k of GROUPS) for (const m of data.groups[k]?.modifiers || []) for (const t of m.items) rows.push([k, m.name ?? '', t, dataSrc(data)]);
   return rows.map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n');
 }
 
@@ -323,7 +328,7 @@ function init() {
     document.querySelectorAll('.seg button').forEach((x) => x.setAttribute('aria-pressed', x === b));
     render();
   }));
-  $('#csv').addEventListener('click', () => download(`askwheel-${srcOf(state.data.src)}-${state.data.keyword}.csv`, toCsv(state.data), 'text/csv'));
+  $('#csv').addEventListener('click', () => download(`askwheel-${dataSrc(state.data)}-${state.data.keyword}.csv`, toCsv(state.data), 'text/csv'));
   $('#share').addEventListener('click', (e) => {
     const { keyword: q, hl, gl, src } = state.data;
     copy(`${location.origin}${location.pathname}?${new URLSearchParams({ q, hl, gl, src: srcOf(src) })}`, e.target);
@@ -332,8 +337,10 @@ function init() {
 
   if (window.__WHEEL_DATA__) {
     const data = window.__WHEEL_DATA__;
-    data.src = srcOf(data.src);
-    $('#src').value = data.src;
+    if (!isGenerated(data)) {
+      data.src = srcOf(data.src);
+      $('#src').value = data.src;
+    }
     $('#q').value = data.keyword;
     $('#hl').value = data.hl;
     $('#gl').value = data.gl;
