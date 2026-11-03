@@ -1,0 +1,6 @@
+#!/bin/sh
+# Block direct commits on main.
+if [ "$(git symbolic-ref --short HEAD 2>/dev/null)" = "main" ]; then
+  echo "pre-commit: direct commits on main are blocked. Create a branch: git switch -c feat/x" >&2
+  exit 1
+fi

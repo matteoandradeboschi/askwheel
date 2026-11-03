@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="pt">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AskWheel</title>
+<meta name="description" content="Veja o que as pessoas perguntam no Google sobre qualquer palavra-chave. Grátis, sem cadastro.">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="top">
+  <a class="brand" href="./">Ask<span>Wheel</span></a>
+  <nav class="tabs" role="tablist">
+    <button role="tab" data-tab="search" aria-selected="true">Buscar</button>
+    <button role="tab" data-tab="skill">Skill p/ Claude Code</button>
+    <button role="tab" data-tab="about">Como funciona</button>
+  </nav>
+</header>
+
+<main>
+  <section id="tab-search" class="tab">
+    <div class="hero">
+      <h1>O que as pessoas perguntam no Google?</h1>
+      <p class="muted">Digite uma palavra-chave e veja perguntas, preposições, comparações e buscas relacionadas do autocomplete. Grátis, sem cadastro.</p>
+      <form id="form" class="search">
+        <input id="q" name="q" type="search" placeholder="ex.: caffè, juros compostos, bicicleta elétrica" autocomplete="off" required>
+        <select id="hl" name="hl" aria-label="Idioma">
+          <option value="pt">Português</option>
+          <option value="it">Italiano</option>
+          <option value="en">English</option>
+          <option value="es">Español</option>
+        </select>
+        <select id="gl" name="gl" aria-label="País">
+          <option value="it">Itália</option>
+          <option value="br">Brasil</option>
+          <option value="pt">Portugal</option>
+          <option value="us">EUA</option>
+          <option value="gb">Reino Unido</option>
+          <option value="es">Espanha</option>
+          <option value="fr">França</option>
+          <option value="de">Alemanha</option>
+        </select>
+        <button id="go" type="submit">Buscar</button>
+      </form>
+      <div id="status" class="status" hidden><div class="bar"><i></i></div><span></span></div>
+    </div>
+
+    <div id="results" hidden>
+      <div class="res-head">
+        <h2 id="res-title"></h2>
+        <div class="actions">
+          <div class="seg" role="group" aria-label="Visualização">
+            <button data-view="wheel" aria-pressed="true">Roda</button>
+            <button data-view="table" aria-pressed="false">Tabela</button>
+          </div>
+          <button id="csv" class="ghost">Baixar CSV</button>
+          <button id="share" class="ghost">Copiar link</button>
+        </div>
+      </div>
+      <div id="groups" class="chips"></div>
+      <div id="wheel" class="wheel"></div>
+      <div id="table" class="table" hidden></div>
+      <div id="extras" class="extras" hidden></div>
+    </div>
+  </section>
+
+  <section id="tab-skill" class="tab prose" hidden>
+    <h1>Skill para Claude Code</h1>
+    <p>Opcional. O site cobre a coleta e a visualização. A skill faz o mesmo dentro do <a href="https://claude.com/claude-code" target="_blank" rel="noopener">Claude Code</a> e acrescenta o que o site não faz:</p>
+    <ul>
+      <li>Agrupa as sugestões por <b>intenção</b> (informacional, comercial, transacional, navegacional).</li>
+      <li>Junta as sugestões em <b>clusters de tópicos</b>.</li>
+      <li>Sugere <b>pautas de conteúdo</b> (títulos e palavras-chave-alvo) e as <b>perguntas prioritárias</b> para responder.</li>
+      <li>Gera um HTML único, offline, com este mesmo relatório e uma aba extra <b>Extras (Claude)</b>.</li>
+    </ul>
+    <h2>Instalar</h2>
+    <p>Cole no terminal (Linux/macOS). Baixa os arquivos da skill e do site para <code>~/.claude/skills/askwheel</code>:</p>
+    <div class="code"><pre id="install-cmd"></pre><button class="ghost copy" data-copy="install-cmd">Copiar</button></div>
+    <p>Depois, no Claude Code:</p>
+    <div class="code"><pre id="usage-cmd">/askwheel caffè --hl it --gl it</pre><button class="ghost copy" data-copy="usage-cmd">Copiar</button></div>
+    <p class="muted">Requisitos: Python 3 (só a biblioteca padrão, nada para instalar). Para atualizar, rode o comando de instalação de novo. Arquivos: <a href="skill/SKILL.md" target="_blank">SKILL.md</a>, <a href="skill/collect.py" target="_blank">collect.py</a>, <a href="skill/render.py" target="_blank">render.py</a>.</p>
+  </section>
+
+  <section id="tab-about" class="tab prose" hidden>
+    <h1>Como funciona</h1>
+    <ol>
+      <li>A palavra-chave é combinada com modificadores no idioma escolhido: perguntas (<i>como, por que, qual…</i>), preposições (<i>para, com, sem…</i>), comparações (<i>vs, ou…</i>), letras a–z e números 0–9.</li>
+      <li>Cada combinação é enviada ao autocomplete do Google <b>direto do seu navegador</b> (cerca de 70 consultas).</li>
+      <li>As sugestões são agrupadas por modificador. O que não se encaixa em nenhum vai para <b>Relacionadas</b>.</li>
+    </ol>
+    <h2>Limitações</h2>
+    <ul>
+      <li>Sem volume de busca nem CPC: não existe fonte gratuita para esses dados.</li>
+      <li>Usa um endpoint não oficial do Google, que pode mudar ou limitar sem aviso.</li>
+      <li>Os resultados variam por idioma, país e momento.</li>
+      <li>Bloqueadores de anúncio podem impedir as consultas.</li>
+    </ul>
+    <h2>Privacidade</h2>
+    <p>O site é estático: não tem servidor, cadastro nem analytics. As consultas vão do seu navegador direto para o Google.</p>
+    <p class="muted">Inspirado em ferramentas de <i>search listening</i> como o AnswerThePublic. Sem afiliação.</p>
+  </section>
+</main>
+
+<footer class="foot muted">AskWheel · grátis e de código aberto · dados do autocomplete do Google</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

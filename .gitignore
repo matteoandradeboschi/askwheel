@@ -1,0 +1,21 @@
+# Secrets
+.env
+.env.*
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# Cloudflare / Node tooling
+.wrangler/
+node_modules/
+
+# OS / editors
+.DS_Store
+.vscode/
+.idea/
+
+# Local test output
+askwheel-*.html
+*.local.json

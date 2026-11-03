@@ -1,0 +1,22 @@
+{
+  "en": {
+    "questions": ["how", "what", "why", "where", "when", "who", "which", "can", "are", "will"],
+    "prepositions": ["for", "with", "without", "to", "near", "is", "can"],
+    "comparisons": ["vs", "versus", "or", "and", "like"]
+  },
+  "pt": {
+    "questions": ["como", "o que", "por que", "onde", "quando", "quem", "qual", "quanto", "pode", "é"],
+    "prepositions": ["para", "com", "sem", "perto de", "de", "em", "sobre"],
+    "comparisons": ["vs", "versus", "ou", "e", "como"]
+  },
+  "it": {
+    "questions": ["come", "cosa", "perché", "dove", "quando", "chi", "quale", "quanto", "può", "è"],
+    "prepositions": ["per", "con", "senza", "vicino", "di", "a", "da"],
+    "comparisons": ["vs", "contro", "o", "e", "come"]
+  },
+  "es": {
+    "questions": ["cómo", "qué", "por qué", "dónde", "cuándo", "quién", "cuál", "cuánto", "puede", "es"],
+    "prepositions": ["para", "con", "sin", "cerca de", "de", "en", "sobre"],
+    "comparisons": ["vs", "versus", "o", "y", "como"]
+  }
+}
