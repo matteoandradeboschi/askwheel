@@ -1,6 +1,6 @@
 # AskWheel
 
-Free, static search-listening site (AnswerThePublic-style): keyword + modifiers → Google Autocomplete suggestions via JSONP from the visitor's browser → sunburst (D3) + table. Hosted on Cloudflare Pages (free). No backend, no analytics.
+Free, static search-listening site (AnswerThePublic-style): keyword + modifiers → autocomplete suggestions from one chosen source (Google, YouTube, Google Shopping, Bing) via JSONP from the visitor's browser → sunburst (D3) + table. Hosted on Cloudflare Pages (free). No backend, no analytics. Amazon, TikTok, Google Trends block browser requests (CORS) and would need a proxy; People Also Ask/Instagram aren't reachable without a headless browser or login.
 
 ## Layout
 
@@ -14,7 +14,7 @@ Free, static search-listening site (AnswerThePublic-style): keyword + modifiers 
 ## Rules
 
 - Grouping logic exists twice (`app.js` `assemble` and `collect.py` `assemble`): change both together.
-- Keep both on the same endpoint params (`client=chrome`, `ie/oe=utf-8`).
+- Keep both on the same endpoint params (`SOURCES` in each file: `client=chrome`, `ie/oe=utf-8`, `ds=yt|sh`; Bing `qsonhs.aspx`, skipping `Type: "SC"`). Python omits only the JSONP wiring: `callback=` for Google/YouTube/Shopping, `type=cb&cb=` for Bing (with `type=cb` Bing returns JS, not JSON).
 - No build step, no npm deps. D3 from cdnjs pinned to `7.9.0`.
 - UI copy in Portuguese, sentence case.
 
