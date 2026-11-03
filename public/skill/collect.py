@@ -110,7 +110,7 @@ def parse_trends(body):
 LOCAL_SOURCES = {
     "amazon": (amazon_url, parse_amazon),
     "tiktok": (lambda q, hl, gl: "https://www.tiktok.com/api/search/general/sug/?" + urllib.parse.urlencode({"keyword": q, "aid": 1988}), parse_tiktok),
-    "trends": (lambda q, hl, gl: "https://trends.google.com/trends/api/autocomplete/" + urllib.parse.quote(q) + "?" + urllib.parse.urlencode({"hl": hl}), parse_trends),
+    "trends": (lambda q, hl, gl: "https://trends.google.com/trends/api/autocomplete/" + urllib.parse.quote(q, safe="") + "?" + urllib.parse.urlencode({"hl": hl}), parse_trends),
 }
 
 

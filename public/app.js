@@ -19,7 +19,7 @@ const SOURCES = {
 };
 // Só na skill (CORS bloqueia no navegador): o seletor "Fonte" não lista estas. open pode ser função(data).
 const SKILL_SOURCES = {
-  amazon: { label: 'Amazon', open: (d) => `https://www.${d.marketplace || 'amazon.it'}/s?k=` },
+  amazon: { label: 'Amazon', prep: 'na', open: (d) => `https://www.${d.marketplace || 'amazon.it'}/s?k=` },
   tiktok: { label: 'TikTok', open: 'https://www.tiktok.com/search?q=' },
   trends: { label: 'Google Trends', open: 'https://trends.google.com/trends/explore?q=' },
 };
@@ -189,7 +189,7 @@ function drawWheel(el, kw, group) {
   el.append(svg.node());
   const hint = document.createElement('p');
   hint.className = 'hint muted';
-  hint.textContent = `A roda mostra até ${WHEEL_LEAVES} sugestões por modificador (todas na Tabela). Clique num modificador para dar zoom, no centro para voltar, numa sugestão para abrir no ${srcLabel(state.data.src)}.`;
+  hint.textContent = `A roda mostra até ${WHEEL_LEAVES} sugestões por modificador (todas na Tabela). Clique num modificador para dar zoom, no centro para voltar, numa sugestão para abrir ${srcMeta(state.data.src).prep || 'no'} ${srcLabel(state.data.src)}.`;
   el.append(hint);
   center.raise();
   centerLabel.raise();
@@ -250,6 +250,7 @@ function show(data) {
   state.data = data;
   state.group = GROUPS.find((k) => data.groups[k]?.count) || 'questions';
   $('#results').hidden = false;
+  $('#share').hidden = !!SKILL_SOURCES[data.src];
   render();
 }
 
@@ -355,6 +356,10 @@ function init() {
     $('#hl').value = data.hl;
     $('#gl').value = data.gl;
     show(data);
+    if (SKILL_SOURCES[data.src]) {
+      const de = srcMeta(data.src).prep === 'na' ? 'da' : 'do';
+      setStatus(`Dados ${de} ${srcLabel(data.src)} coletados pela skill. Buscar aqui consulta ao vivo a fonte escolhida.`, 1);
+    }
   } else if (params.get('q')) {
     $('#q').value = params.get('q');
     search(params.get('q'), $('#hl').value, $('#gl').value, $('#src').value);
