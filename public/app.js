@@ -1,7 +1,21 @@
-// AskWheel: coleta sugestões do autocomplete do Google (JSONP, direto do navegador) e mostra como roda + tabela.
+// AskWheel: coleta sugestões de autocomplete (Google, YouTube, Shopping, Bing; JSONP, direto do navegador) e mostra como roda + tabela.
 // Também renderiza dados pré-carregados (window.__WHEEL_DATA__), usado pelo HTML gerado pela skill.
 
 const ENDPOINT = 'https://suggestqueries.google.com/complete/search';
+// Fontes: url(q, hl, gl, cb) monta o JSONP; parse(data) devolve a lista; open é o prefixo p/ abrir a sugestão.
+const goog = (ds) => (q, hl, gl, cb) => `${ENDPOINT}?client=chrome&ie=utf-8&oe=utf-8&hl=${hl}&gl=${gl}${ds}&q=${encodeURIComponent(q)}&callback=${cb}`;
+const SOURCES = {
+  google: { label: 'Google', url: goog(''), parse: (d) => d?.[1], open: 'https://www.google.com/search?q=' },
+  youtube: { label: 'YouTube', url: goog('&ds=yt'), parse: (d) => d?.[1], open: 'https://www.youtube.com/results?search_query=' },
+  shopping: { label: 'Google Shopping', url: goog('&ds=sh'), parse: (d) => d?.[1], open: 'https://www.google.com/search?tbm=shop&q=' },
+  bing: {
+    label: 'Bing',
+    url: (q, hl, gl, cb) => `https://api.bing.com/qsonhs.aspx?type=cb&cb=${cb}&mkt=${hl}-${gl.toUpperCase()}&q=${encodeURIComponent(q)}`,
+    // Type 'SC' = correção ortográfica, ruído
+    parse: (d) => (d?.AS?.Results || []).flatMap((r) => r.Suggests || []).filter((x) => x.Type !== 'SC').map((x) => x.Txt),
+    open: 'https://www.bing.com/search?q=',
+  },
+};
 const GROUPS = ['questions', 'prepositions', 'comparisons', 'alphabeticals', 'numbers', 'related'];
 const LABELS = {
   questions: 'Perguntas', prepositions: 'Preposições', comparisons: 'Comparações',
@@ -20,15 +34,15 @@ let state = { data: null, group: 'questions', view: 'wheel' };
 
 // ---------- coleta ----------
 
-function jsonp(q, hl, gl, timeout = 8000) {
+function jsonp(src, q, hl, gl, timeout = 8000) {
   return new Promise((resolve) => {
     const cb = '__aw' + Math.random().toString(36).slice(2);
     const s = document.createElement('script');
     const done = (list) => { clearTimeout(t); delete window[cb]; s.remove(); resolve(list); };
     const t = setTimeout(() => done(null), timeout);
-    window[cb] = (data) => done(Array.isArray(data?.[1]) ? data[1] : []);
+    window[cb] = (data) => { const l = SOURCES[src].parse(data); done(Array.isArray(l) ? l : []); };
     s.onerror = () => done(null);
-    s.src = `${ENDPOINT}?client=chrome&ie=utf-8&oe=utf-8&hl=${hl}&gl=${gl}&q=${encodeURIComponent(q)}&callback=${cb}`;
+    s.src = SOURCES[src].url(q, hl, gl, cb);
     document.head.append(s);
   });
 }
@@ -72,10 +86,10 @@ function assemble(kw, plan, results, meta) {
     if (!assigned.has(k) && !seen.has(k)) { seen.add(k); rel.items.push(s); }
   }
   for (const g of Object.values(groups)) g.count = g.modifiers.reduce((n, m) => n + m.items.length, 0);
-  return { keyword: kw, ...meta, collected_at: new Date().toISOString(), source: 'google-autocomplete', groups };
+  return { keyword: kw, ...meta, collected_at: new Date().toISOString(), source: `${meta.src}-autocomplete`, groups };
 }
 
-async function collect(kw, hl, gl, onProgress) {
+async function collect(kw, hl, gl, src, onProgress) {
   const all = window.__WHEEL_MODIFIERS__ || (await fetch('modifiers.json').then((r) => r.json()));
   const plan = buildPlan(kw, all[hl] || all.en);
   const results = new Array(plan.length);
@@ -83,7 +97,7 @@ async function collect(kw, hl, gl, onProgress) {
   const worker = async () => {
     while (next < plan.length) {
       const i = next++;
-      const r = await jsonp(plan[i].q, hl, gl);
+      const r = await jsonp(src, plan[i].q, hl, gl);
       if (r === null) failed++;
       results[i] = r || [];
       onProgress(++done, plan.length);
@@ -91,7 +105,7 @@ async function collect(kw, hl, gl, onProgress) {
     }
   };
   await Promise.all(Array.from({ length: 4 }, worker));
-  return { data: assemble(kw, plan, results, { hl, gl }), failed, total: plan.length };
+  return { data: assemble(kw, plan, results, { hl, gl, src }), failed, total: plan.length };
 }
 
 // ---------- roda (sunburst com zoom) ----------
@@ -129,7 +143,7 @@ function drawWheel(el, kw, group) {
     .attr('stroke', 'var(--bg)')
     .attr('d', (d) => arc(d.current))
     .style('cursor', 'pointer')
-    .on('click', (e, d) => (d.children ? zoom(d) : window.open(googleUrl(d.data.name), '_blank', 'noopener')));
+    .on('click', (e, d) => (d.children ? zoom(d) : window.open(openUrl(d.data.name), '_blank', 'noopener')));
   path.append('title').text((d) => (d.children ? `${d.data.name}: ${d.children.length} sugestões` : d.data.name));
 
   const label = g.append('g').attr('text-anchor', 'middle').selectAll('text')
@@ -168,7 +182,7 @@ function drawWheel(el, kw, group) {
   el.append(svg.node());
   const hint = document.createElement('p');
   hint.className = 'hint muted';
-  hint.textContent = `A roda mostra até ${WHEEL_LEAVES} sugestões por modificador (todas na Tabela). Clique num modificador para dar zoom, no centro para voltar, numa sugestão para abrir no Google.`;
+  hint.textContent = `A roda mostra até ${WHEEL_LEAVES} sugestões por modificador (todas na Tabela). Clique num modificador para dar zoom, no centro para voltar, numa sugestão para abrir no ${srcLabel(state.data.src)}.`;
   el.append(hint);
   center.raise();
   centerLabel.raise();
@@ -176,14 +190,16 @@ function drawWheel(el, kw, group) {
 
 // ---------- tabela / extras ----------
 
-const googleUrl = (q) => `https://www.google.com/search?q=${encodeURIComponent(q)}`;
+const srcOf = (src) => (SOURCES[src] ? src : 'google');
+const srcLabel = (src) => SOURCES[srcOf(src)].label;
+const openUrl = (q) => SOURCES[srcOf(state.data.src)].open + encodeURIComponent(q);
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
 
 function drawTable(el, group) {
   const mods = group.modifiers.filter((m) => m.items.length);
   el.innerHTML = mods.length
     ? mods.map((m) => `<div class="block"><h3>${esc(m.name ?? 'relacionadas')} <small>${m.items.length}</small></h3><ol>${
-        m.items.map((t) => `<li><a href="${googleUrl(t)}" target="_blank" rel="noopener">${esc(t)}</a></li>`).join('')
+        m.items.map((t) => `<li><a href="${openUrl(t)}" target="_blank" rel="noopener">${esc(t)}</a></li>`).join('')
       }</ol></div>`).join('')
     : '<p class="empty">Nenhuma sugestão neste grupo.</p>';
 }
@@ -199,7 +215,7 @@ function drawExtras(el, extras) {
 function render() {
   const { data } = state;
   const total = GROUPS.reduce((n, k) => n + (data.groups[k]?.count || 0), 0);
-  $('#res-title').textContent = `${total} sugestões para “${data.keyword}”`;
+  $('#res-title').textContent = `${total} sugestões para “${data.keyword}” · ${srcLabel(data.src)}`;
   const keys = GROUPS.filter((k) => data.groups[k]).concat(data.extras ? ['extras'] : []);
   $('#groups').innerHTML = keys.map((k) => `<button data-group="${k}" aria-pressed="${k === state.group}">${
     k === 'extras' ? '' : `<b>${data.groups[k].count}</b>`}${LABELS[k]}</button>`).join('');
@@ -230,23 +246,24 @@ function setStatus(text, frac) {
   $('#status i').style.width = `${Math.round((frac ?? 0) * 100)}%`;
 }
 
-async function search(kw, hl, gl) {
+async function search(kw, hl, gl, src) {
+  const label = srcLabel(src);
   $('#go').disabled = true;
-  setStatus('Consultando o Google…', 0);
+  setStatus(`Consultando o ${label}…`, 0);
   try {
-    const { data, failed, total } = await collect(kw, hl, gl, (d, n) => setStatus(`Consultando o Google… ${d}/${n}`, d / n));
-    if (failed === total) return setStatus('O Google não respondeu. Um bloqueador de anúncios ou a rede pode estar impedindo as consultas.', 0);
+    const { data, failed, total } = await collect(kw, hl, gl, src, (d, n) => setStatus(`Consultando o ${label}… ${d}/${n}`, d / n));
+    if (failed === total) return setStatus(`O ${label} não respondeu. Um bloqueador de anúncios ou a rede pode estar impedindo as consultas.`, 0);
     setStatus(failed ? `Pronto. ${failed} de ${total} consultas falharam.` : 'Pronto.', 1);
     show(data);
-    history.replaceState(null, '', `?${new URLSearchParams({ q: kw, hl, gl })}`);
+    history.replaceState(null, '', `?${new URLSearchParams({ q: kw, hl, gl, src })}`);
   } finally {
     $('#go').disabled = false;
   }
 }
 
 function toCsv(data) {
-  const rows = [['grupo', 'modificador', 'sugestao']];
-  for (const k of GROUPS) for (const m of data.groups[k]?.modifiers || []) for (const t of m.items) rows.push([k, m.name ?? '', t]);
+  const rows = [['fonte', 'grupo', 'modificador', 'sugestao']];
+  for (const k of GROUPS) for (const m of data.groups[k]?.modifiers || []) for (const t of m.items) rows.push([srcOf(data.src), k, m.name ?? '', t]);
   return rows.map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n');
 }
 
@@ -288,13 +305,14 @@ function init() {
   const d = defaults();
   $('#hl').value = params.get('hl') || d.hl;
   $('#gl').value = params.get('gl') || d.gl;
+  $('#src').value = srcOf(params.get('src'));
   $('#install-cmd').textContent = installCommand();
 
   document.querySelectorAll('.tabs button').forEach((b) => b.addEventListener('click', () => selectTab(b.dataset.tab)));
   $('#form').addEventListener('submit', (e) => {
     e.preventDefault();
     const kw = $('#q').value.trim();
-    if (kw) search(kw, $('#hl').value, $('#gl').value);
+    if (kw) search(kw, $('#hl').value, $('#gl').value, $('#src').value);
   });
   $('#groups').addEventListener('click', (e) => {
     const b = e.target.closest('button');
@@ -305,22 +323,24 @@ function init() {
     document.querySelectorAll('.seg button').forEach((x) => x.setAttribute('aria-pressed', x === b));
     render();
   }));
-  $('#csv').addEventListener('click', () => download(`askwheel-${state.data.keyword}.csv`, toCsv(state.data), 'text/csv'));
+  $('#csv').addEventListener('click', () => download(`askwheel-${srcOf(state.data.src)}-${state.data.keyword}.csv`, toCsv(state.data), 'text/csv'));
   $('#share').addEventListener('click', (e) => {
-    const { keyword: q, hl, gl } = state.data;
-    copy(`${location.origin}${location.pathname}?${new URLSearchParams({ q, hl, gl })}`, e.target);
+    const { keyword: q, hl, gl, src } = state.data;
+    copy(`${location.origin}${location.pathname}?${new URLSearchParams({ q, hl, gl, src: srcOf(src) })}`, e.target);
   });
   document.querySelectorAll('.copy').forEach((b) => b.addEventListener('click', () => copy($(`#${b.dataset.copy}`).textContent, b)));
 
   if (window.__WHEEL_DATA__) {
     const data = window.__WHEEL_DATA__;
+    data.src = srcOf(data.src);
+    $('#src').value = data.src;
     $('#q').value = data.keyword;
     $('#hl').value = data.hl;
     $('#gl').value = data.gl;
     show(data);
   } else if (params.get('q')) {
     $('#q').value = params.get('q');
-    search(params.get('q'), $('#hl').value, $('#gl').value);
+    search(params.get('q'), $('#hl').value, $('#gl').value, $('#src').value);
   }
 }
 
