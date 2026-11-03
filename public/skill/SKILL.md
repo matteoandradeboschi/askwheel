@@ -1,6 +1,6 @@
 ---
 name: askwheel
-description: Gera um relatório de search listening (estilo AnswerThePublic) para uma palavra-chave — perguntas, preposições, comparações, a–z, 0–9 e relacionadas, com dados reais do autocomplete (Google, YouTube, Google Shopping ou Bing) — e acrescenta análise do Claude (intenção, clusters, pautas, FAQs) num HTML único. Use quando o usuário rodar /askwheel <keyword>, pedir "o que as pessoas perguntam sobre X", "ideias de conteúdo para X", "keyword research grátis" ou "relatório AskWheel".
+description: Gera um relatório de search listening (estilo AnswerThePublic) para uma palavra-chave — perguntas, preposições, comparações, a–z, 0–9 e relacionadas, com dados reais do autocomplete (Google, YouTube, Google Shopping, Bing, Amazon, TikTok ou Google Trends) — e acrescenta análise do Claude (intenção, clusters, pautas, FAQs) num HTML único. Use quando o usuário rodar /askwheel <keyword>, pedir "o que as pessoas perguntam sobre X", "ideias de conteúdo para X", "keyword research grátis" ou "relatório AskWheel".
 ---
 
 # AskWheel
@@ -9,7 +9,7 @@ Mesma coleta do site AskWheel, mais o que só o Claude faz. O HTML final reaprov
 
 ## Entrada
 
-`$ARGUMENTS` = `<keyword> [--hl it|pt|en|es] [--gl it|br|pt|us|gb|es|fr|de] [--source google|youtube|shopping|bing]`. Sem `--hl`/`--gl`: deduza do idioma da keyword; na dúvida use `it`/`it`. Sem `--source`: `google`. Uma fonte por execução; Amazon, TikTok, Instagram e People Also Ask não são suportados.
+`$ARGUMENTS` = `<keyword> [--hl it|pt|en|es] [--gl it|br|pt|us|gb|es|fr|de] [--source google|youtube|shopping|bing|amazon|tiktok|trends]`. Sem `--hl`/`--gl`: deduza do idioma da keyword; na dúvida use `it`/`it`. Sem `--source`: `google`. Uma fonte por execução. `amazon`, `tiktok` e `trends` só existem na skill (o navegador bloqueia por CORS, o site não os oferece). `amazon` usa a loja do `--gl` (it, br, us, gb, es, fr, de; pt usa amazon.es; outros caem em amazon.it). `trends` é experimental: devolve tópicos/produtos (títulos), não consultas, e o Google pode limitar (429). Instagram e People Also Ask não são suportados.
 
 ## Passos
 

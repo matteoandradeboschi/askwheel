@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Coleta sugestões de autocomplete (google, youtube, shopping, bing) para uma keyword (mesma lógica do app.js do site).
+"""Coleta sugestões de autocomplete (google, youtube, shopping, bing + amazon, tiktok, trends só na skill) para uma keyword (mesma lógica do app.js do site).
 
-Uso: python3 collect.py "caffè" --hl it --gl it [--source google|youtube|shopping|bing] -o dados.json
+Uso: python3 collect.py "caffè" --hl it --gl it [--source google|youtube|shopping|bing|amazon|tiktok|trends] -o dados.json
 Só biblioteca padrão.
 """
 import argparse
@@ -74,15 +74,60 @@ SOURCES = {
 }
 
 
+# Só na skill: o navegador bloqueia (CORS), o Python não. fonte: (url(q, hl, gl), parser do corpo bruto)
+# Amazon: marketplace (host, mid) pelo país; sem loja própria, pt usa amazon.es. Outros países caem em amazon.it.
+AMAZON = {
+    "it": ("amazon.it", "APJ6JRA9NG5V4"), "br": ("amazon.com.br", "A2Q3Y263D00KWC"),
+    "us": ("amazon.com", "ATVPDKIKX0DER"), "gb": ("amazon.co.uk", "A1F83G8C2ARO7P"),
+    "es": ("amazon.es", "A1RKKUPIHCS9HS"), "pt": ("amazon.es", "A1RKKUPIHCS9HS"),
+    "fr": ("amazon.fr", "A13V1IB3VIYZZH"), "de": ("amazon.de", "A1PA6795UKMFR9"),
+}
+
+
+def amazon_market(gl):
+    return AMAZON.get(gl, AMAZON["it"])
+
+
+def amazon_url(q, hl, gl):
+    host, mid = amazon_market(gl)
+    return f"https://completion.{host}/api/2017/suggestions?" + urllib.parse.urlencode({"mid": mid, "alias": "aps", "prefix": q})
+
+
+def parse_amazon(body):
+    return [s["value"] for s in json.loads(body).get("suggestions") or [] if s.get("value")]
+
+
+def parse_tiktok(body):
+    return [s["content"] for s in json.loads(body).get("sug_list") or [] if s.get("content")]
+
+
+def parse_trends(body):
+    # prefixo anti-JSON `)]}'`; devolve tópicos (títulos), não consultas
+    topics = json.loads(body[body.index("{"):])["default"]["topics"]
+    return [t["title"] for t in topics if t.get("title")]
+
+
+LOCAL_SOURCES = {
+    "amazon": (amazon_url, parse_amazon),
+    "tiktok": (lambda q, hl, gl: "https://www.tiktok.com/api/search/general/sug/?" + urllib.parse.urlencode({"keyword": q, "aid": 1988}), parse_tiktok),
+    "trends": (lambda q, hl, gl: "https://trends.google.com/trends/api/autocomplete/" + urllib.parse.quote(q) + "?" + urllib.parse.urlencode({"hl": hl}), parse_trends),
+}
+
+
 def fetch(q, hl, gl, src):
-    endpoint, params, parse = SOURCES[src]
-    url = endpoint + "?" + urllib.parse.urlencode({**params(hl, gl), "q": q})
+    if src in LOCAL_SOURCES:
+        url_of, parse = LOCAL_SOURCES[src]
+        url, decode = url_of(q, hl, gl), parse
+    else:
+        endpoint, params, parse = SOURCES[src]
+        url = endpoint + "?" + urllib.parse.urlencode({**params(hl, gl), "q": q})
+        decode = lambda body: parse(json.loads(body))
     req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
     try:
         with urllib.request.urlopen(req, timeout=8) as r:
-            data = json.loads(r.read().decode("utf-8"))
+            body = r.read().decode("utf-8")
         time.sleep(0.12)
-        return parse(data)
+        return decode(body)
     except Exception:
         return None
 
@@ -128,7 +173,7 @@ def main():
     ap.add_argument("--hl", default="it", help="idioma: pt, it, en, es")
     ap.add_argument("--gl", default="it", help="país: it, br, pt, us, gb, es, fr, de")
     ap.add_argument("-o", "--out", default="-")
-    ap.add_argument("--source", default="google", choices=list(SOURCES))
+    ap.add_argument("--source", default="google", choices=[*SOURCES, *LOCAL_SOURCES])
     args = ap.parse_args()
 
     mods_all = json.loads((HERE / "site" / "modifiers.json").read_text(encoding="utf-8"))
@@ -139,6 +184,8 @@ def main():
 
     failed = sum(r is None for r in results)
     data = assemble(kw, plan, results, args.hl, args.gl, args.source)
+    if args.source == "amazon":
+        data["marketplace"] = amazon_market(args.gl)[0]  # app.js abre as sugestões nessa loja
     out = json.dumps(data, ensure_ascii=False, indent=1)
     if args.out == "-":
         print(out)
