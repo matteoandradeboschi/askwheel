@@ -1,6 +1,10 @@
 // Pedido do site → abre a busca no Google numa aba em segundo plano → injeta readPaa → readPaa devolve as
-// perguntas por mensagem → resposta vai para a aba do site e a do Google fecha. Sem estado guardado aqui:
-// o job (aba do site + id) viaja com o script injetado, então tanto faz se o background dormir no meio.
+// perguntas por mensagem → resposta vai para a aba do site e a do Google fecha. O job (aba do site + id) fica
+// em chrome.storage.session, pela aba do Google, e os listeners ficam no topo: o background dorme (~30 s) e
+// perderia listeners criados dentro de start (ex.: captcha demorado). Um job por vez: um pedido novo fecha a aba
+// do anterior.
+const jobOf = async (tabId) => (await chrome.storage.session.get(String(tabId)))[tabId];
+
 chrome.runtime.onMessage.addListener((msg, sender) => {
   if (msg?.type === 'paa' && sender.tab) start(msg, sender.tab.id);
   else if (msg?.type === 'paa-done' && sender.tab) finish(msg, sender.tab.id);
@@ -9,26 +13,26 @@ chrome.runtime.onMessage.addListener((msg, sender) => {
 
 // Injeta readPaa a cada carregamento da aba, não só no primeiro: o Google às vezes abre uma página de checagem
 // que recarrega ou redireciona (captcha em /sorry, cookies em consent.google.com). Depois que o usuário resolve,
-// a aba volta para /search e a coleta segue sozinha. O listener vive até a aba fechar.
-async function start({ id, q, hl, gl }, siteTab) {
-  const job = { id, siteTab };
-  const tab = await chrome.tabs.create({ url: `https://www.google.com/search?${new URLSearchParams({ q, hl, gl })}`, active: false });
+// a aba volta para /search e a coleta segue sozinha. O job vale até a aba fechar.
+chrome.tabs.onUpdated.addListener(async (tabId, info, t) => {
   // tab.url só vem para hosts com permissão; o about:blank inicial também chega como "complete" no Firefox.
-  const onUpdated = (tabId, info, t) => {
-    if (tabId !== tab.id || info.status !== 'complete' || t.url === 'about:blank') return;
-    chrome.scripting.executeScript({ target: { tabId }, func: readPaa, args: [job] }).catch(() => {
-      // Fora de www.google.com (ex.: consent.google.com): mostra a aba para o usuário resolver.
-      chrome.tabs.update(tabId, { active: true });
-      reply(job, { error: 'blocked' });
-    });
-  };
-  const onRemoved = (tabId) => {
-    if (tabId !== tab.id) return;
-    chrome.tabs.onUpdated.removeListener(onUpdated);
-    chrome.tabs.onRemoved.removeListener(onRemoved);
-  };
-  chrome.tabs.onUpdated.addListener(onUpdated);
-  chrome.tabs.onRemoved.addListener(onRemoved);
+  if (info.status !== 'complete' || t.url === 'about:blank') return;
+  const job = await jobOf(tabId);
+  if (!job) return;
+  chrome.scripting.executeScript({ target: { tabId }, func: readPaa, args: [job] }).catch(() => {
+    // Fora de www.google.com (ex.: consent.google.com): mostra a aba para o usuário resolver.
+    chrome.tabs.update(tabId, { active: true });
+    reply(job, { error: 'blocked' });
+  });
+});
+chrome.tabs.onRemoved.addListener((tabId) => chrome.storage.session.remove(String(tabId)));
+
+async function start({ id, q, hl, gl }, siteTab) {
+  const old = Object.keys(await chrome.storage.session.get(null)).map(Number);
+  await chrome.storage.session.clear();
+  if (old.length) chrome.tabs.remove(old).catch(() => {});
+  const tab = await chrome.tabs.create({ url: `https://www.google.com/search?${new URLSearchParams({ q, hl, gl })}`, active: false });
+  await chrome.storage.session.set({ [tab.id]: { id, siteTab } });
 }
 
 function finish({ job, error, data }, googleTab) {

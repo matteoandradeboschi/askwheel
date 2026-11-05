@@ -3,7 +3,7 @@
   "name": "AskWheel PAA",
   "version": "0.1.0",
   "description": "Traz o People Also Ask do Google para o AskWheel automaticamente, a cada busca.",
-  "permissions": ["scripting"],
+  "permissions": ["scripting", "storage"],
   "host_permissions": ["https://www.google.com/*"],
   "background": { "service_worker": "background.js", "scripts": ["background.js"] },
   "content_scripts": [{
