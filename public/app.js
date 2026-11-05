@@ -22,15 +22,25 @@ const SOURCES = {
 const SITE_SOURCES = ['google', 'shopping'];
 // Só na skill (CORS bloqueia no navegador). open pode ser função(data).
 const SKILL_SOURCES = {
-  amazon: { label: 'Amazon', prep: 'na', open: (d) => `https://www.${encodeURIComponent(d.marketplace || 'amazon.it')}/s?k=` },
+  amazon: { label: 'Amazon', open: (d) => `https://www.${encodeURIComponent(d.marketplace || 'amazon.it')}/s?k=` },
   tiktok: { label: 'TikTok', open: 'https://www.tiktok.com/search?q=' },
   trends: { label: 'Google Trends', open: 'https://trends.google.com/trends/explore?q=' },
 };
 const GROUPS = ['questions', 'prepositions', 'comparisons', 'alphabeticals', 'numbers', 'related'];
-const LABELS = {
-  questions: 'Perguntas', prepositions: 'Preposições', comparisons: 'Comparações',
-  alphabeticals: 'Alfabética', numbers: 'Números', related: 'Relacionadas', extras: 'Extras (Claude)',
-};
+// ---------- idioma da interface (textos em i18n.js) ----------
+const UI_LANGS = ['pt', 'en', 'it'];
+let uiLang = 'pt';
+// t('chave', { var }): troca {var}; chave sem tradução cai no pt.
+const t = (k, v = {}) => (I18N[uiLang][k] ?? I18N.pt[k] ?? k).replace(/\{(\w+)\}/g, (_, x) => v[x] ?? '');
+const groupLabel = (k) => t(`g.${k}`);
+
+function applyI18n() {
+  document.documentElement.lang = uiLang;
+  document.querySelectorAll('[data-i18n]').forEach((el) => (el.innerHTML = t(el.dataset.i18n)));
+  document.querySelectorAll('[data-i18n-ph]').forEach((el) => (el.placeholder = t(el.dataset.i18nPh)));
+  document.querySelectorAll('[data-i18n-label]').forEach((el) => el.setAttribute('aria-label', t(el.dataset.i18nLabel)));
+  document.querySelectorAll('[data-i18n-content]').forEach((el) => el.setAttribute('content', t(el.dataset.i18nContent)));
+}
 const WHEEL_LEAVES = 6;
 const OVERVIEW_LEAVES = 15;
 // Tons pastel: o anel interno usa a cor, o externo uma versão clara dela (texto sempre escuro).
@@ -135,14 +145,14 @@ async function collect(kw, hl, gl, src, onProgress) {
 function drawGroupWheel(el, data, group) {
   const kw = data.keyword;
   const mods = group.modifiers.filter((m) => m.items.length);
-  if (!mods.length) { el.innerHTML = '<p class="empty">Nenhuma sugestão neste grupo.</p>'; return; }
+  if (!mods.length) { el.innerHTML = `<p class="empty">${t('empty.group')}</p>`; return; }
   const tree = { name: kw, children: mods.map((m) => ({ name: m.name ?? kw, children: m.items.slice(0, WHEEL_LEAVES).map((t) => ({ name: t, value: 1 })) })) };
   drawWheel(el, tree, {
     open: (d) => openUrl(data, d.data.name),
     tip: (d) => (d.children
-      ? tipHtml(d.data.name, [['Sugestões', group.modifiers.find((m) => (m.name ?? kw) === d.data.name)?.items.length]], 'Clique para dar zoom')
-      : tipHtml(d.data.name, [['Fonte', dataLabel(data)], ['Modificador', d.parent.data.name]], `Clique para abrir ${srcMeta(data.src).prep || 'no'} ${srcLabel(data.src)}`)),
-    hint: `A roda mostra até ${WHEEL_LEAVES} sugestões por modificador (todas em Cards e na lista abaixo). Clique num modificador para dar zoom, no centro para voltar.`,
+      ? tipHtml(d.data.name, [[t('tip.sugs'), group.modifiers.find((m) => (m.name ?? kw) === d.data.name)?.items.length]], t('tip.zoom'))
+      : tipHtml(d.data.name, [[t('tip.src'), dataLabel(data)], [t('tip.mod'), d.parent.data.name]], t('tip.open', { src: srcLabel(data.src) }))),
+    hint: t('hint.group', { n: WHEEL_LEAVES }),
   });
 }
 
@@ -163,9 +173,9 @@ function renderOverview() {
   drawWheel(el, tree, {
     open: (d) => openUrl(d.parent.data.data, d.data.name),
     tip: (d) => (d.children
-      ? tipHtml(d.data.name, [['Sugestões', total(d.data.data)]], 'Clique para dar zoom')
-      : tipHtml(d.data.name, [['Fonte', d.parent.data.name]], 'Clique para abrir a busca')),
-    hint: 'Principais sugestões de cada fonte. Clique numa fonte para dar zoom; o detalhe por modificador está abaixo.',
+      ? tipHtml(d.data.name, [[t('tip.sugs'), total(d.data.data)]], t('tip.zoom'))
+      : tipHtml(d.data.name, [[t('tip.src'), d.parent.data.name]], t('tip.openSearch'))),
+    hint: t('hint.overview'),
   });
 }
 
@@ -309,6 +319,7 @@ function drawMap(el, tree) {
 
   // x: cada filho começa após o fim do texto do pai. Clicar numa pergunta abre a busca no Google.
   const links = add('g', {});
+  const searchLabel = t('map.search'); // dentro de draw, t é o elemento de texto
   let maxX = 0;
   (function draw(n, x) {
     const leaf = !(n.children || []).length;
@@ -328,7 +339,7 @@ function drawMap(el, tree) {
       t.setAttribute('tabindex', '0');
       t.setAttribute('role', 'link');
       t.addEventListener('keydown', (e) => { if (e.key === 'Enter') go(); });
-      add('title', {}, t).textContent = 'Buscar no Google';
+      add('title', {}, t).textContent = searchLabel;
     }
     const end = tx + t.getComputedTextLength();
     maxX = Math.max(maxX, end);
@@ -351,7 +362,7 @@ const srcMeta = (src) => SOURCES[src] || SKILL_SOURCES[src] || SOURCES.google;
 const srcLabel = (src) => srcMeta(src).label;
 // dados da skill sem fonte real (sugestões geradas pelo Claude): sem src, links caem numa busca no Google
 const isGenerated = (data) => data.source === 'claude-generated';
-const dataLabel = (data) => (isGenerated(data) ? 'Gerado pelo Claude' : srcLabel(data.src));
+const dataLabel = (data) => (isGenerated(data) ? t('generated') : srcLabel(data.src));
 const dataSrc = (data) => (isGenerated(data) ? 'claude-generated' : SOURCES[data.src] || SKILL_SOURCES[data.src] ? data.src : 'google');
 const openUrl = (data, q) => {
   const open = srcMeta(data.src).open;
@@ -362,15 +373,15 @@ const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&l
 function drawTable(el, data, group) {
   const mods = group.modifiers.filter((m) => m.items.length);
   el.innerHTML = mods.length
-    ? mods.map((m) => `<div class="block"><h3>${esc(m.name ?? 'relacionadas')} <small>${m.items.length}</small></h3><ul class="rows">${
+    ? mods.map((m) => `<div class="block"><h3>${esc(m.name ?? groupLabel('related').toLowerCase())} <small>${m.items.length}</small></h3><ul class="rows">${
         m.items.map((t) => `<li>${plusBtn(t)}${linkTo(data, t)}</li>`).join('')
       }</ul></div>`).join('')
-    : '<p class="empty">Nenhuma sugestão neste grupo.</p>';
+    : `<p class="empty">${t('empty.group')}</p>`;
 }
 
 const ICON_COPY = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>';
 const ICON_DONE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5L20 7"/></svg>';
-const plusBtn = (t) => `<button class="plus" data-text="${esc(t)}" title="Copiar" aria-label="Copiar “${esc(t)}”">${ICON_COPY}</button>`;
+const plusBtn = (s) => `<button class="plus" data-text="${esc(s)}" title="${t('copy')}" aria-label="${esc(t('copy.item', { t: s }))}">${ICON_COPY}</button>`;
 const linkTo = (data, t) => `<a href="${esc(openUrl(data, t))}" target="_blank" rel="noopener">${esc(t)}</a>`;
 
 // Lista única com todas as fontes, etiqueta "grupo / modificador" e filtros (como a lista de palavras-chave do ATP).
@@ -382,11 +393,11 @@ function renderList() {
     (data.groups[k]?.modifiers || []).flatMap((m) => m.items.map((t) => ({ t, k, m: m.name, data })))));
   const shown = rows.filter((r) => (!g || r.k === g) && (!f || norm(r.t).includes(f)));
   $('#list-groups').innerHTML = [null, ...GROUPS].map((k) =>
-    `<button data-lgroup="${k ?? ''}" aria-pressed="${k === g}">${k ? LABELS[k] : 'Todos'}</button>`).join('');
-  $('#list-count').textContent = `${shown.length} de ${rows.length}`;
+    `<button data-lgroup="${k ?? ''}" aria-pressed="${k === g}">${k ? groupLabel(k) : t('list.all')}</button>`).join('');
+  $('#list-count').textContent = t('list.count', { a: shown.length, n: rows.length });
   $('#list tbody').innerHTML = shown.map((r) => `<tr><td><span class="kw">${plusBtn(r.t)}${linkTo(r.data, r.t)}</span></td><td>${
-    esc(dataLabel(r.data))}</td><td><span class="tag ${r.k}">${esc(LABELS[r.k].toLowerCase())}${r.m ? ` / ${esc(r.m)}` : ''}</span></td></tr>`).join('')
-    || '<tr><td colspan="3" class="empty">Nenhuma sugestão.</td></tr>';
+    esc(dataLabel(r.data))}</td><td><span class="tag ${r.k}">${esc(groupLabel(r.k).toLowerCase())}${r.m ? ` / ${esc(r.m)}` : ''}</span></td></tr>`).join('')
+    || `<tr><td colspan="3" class="empty">${t('list.none')}</td></tr>`;
 }
 
 function drawExtras(el, extras) {
@@ -405,11 +416,11 @@ function addPanel(data, el = $('#panels').appendChild(document.createElement('se
   const view = narrow() ? 'table' : 'wheel';
   el.className = 'panel';
   el.innerHTML = `<div class="res-head"><h2></h2><div class="actions">
-      <div class="seg" role="group" aria-label="Visualização">
-        <button data-view="wheel" aria-pressed="${view === 'wheel'}">Roda</button><button data-view="table" aria-pressed="${view === 'table'}">Cards</button>
+      <div class="seg" role="group" aria-label="${t('view.label')}">
+        <button data-view="wheel" aria-pressed="${view === 'wheel'}">${t('view.wheel')}</button><button data-view="table" aria-pressed="${view === 'table'}">${t('view.cards')}</button>
       </div>
-      <button class="ghost csv">Baixar CSV</button></div></div>
-    <div class="mtabs" role="group" aria-label="Grupo"></div><div class="wheel"></div><div class="table" hidden></div><div class="extras" hidden></div>`;
+      <button class="ghost csv">${t('csv')}</button></div></div>
+    <div class="mtabs" role="group" aria-label="${t('g.label')}"></div><div class="wheel"></div><div class="table" hidden></div><div class="extras" hidden></div>`;
   // Abre no primeiro grupo com roda legível (≥3 modificadores com sugestões); senão, no primeiro com alguma.
   const filled = (k) => data.groups[k]?.modifiers.filter((m) => m.items.length).length || 0;
   const p = { data, el, view, group: GROUPS.find((k) => filled(k) >= 3) || GROUPS.find((k) => data.groups[k]?.count) || 'questions' };
@@ -434,10 +445,10 @@ function renderPanel(p) {
   const { data, el } = p;
   const q = (s) => el.querySelector(s);
   const total = GROUPS.reduce((n, k) => n + (data.groups[k]?.count || 0), 0);
-  q('h2').innerHTML = `${esc(dataLabel(data))} <small>${Number(total)} sugestões</small>`;
+  q('h2').innerHTML = `${esc(dataLabel(data))} <small>${t('panel.count', { n: Number(total) })}</small>`;
   const keys = GROUPS.filter((k) => data.groups[k]).concat(data.extras ? ['extras'] : []);
   q('.mtabs').innerHTML = keys.map((k) => `<button data-group="${k}" aria-pressed="${k === p.group}">${
-    k === 'extras' ? '' : `<b>${Number(data.groups[k].count)}</b>`}${LABELS[k]}</button>`).join('');
+    k === 'extras' ? '' : `<b>${Number(data.groups[k].count)}</b>`}${groupLabel(k)}</button>`).join('');
   // grupo vazio: aba esmaecida e desativada
   q('.mtabs').querySelectorAll('button').forEach((b) => (b.disabled = b.dataset.group !== 'extras' && !data.groups[b.dataset.group].count));
 
@@ -461,19 +472,19 @@ function renderPaa() {
   const ext = hasExt();
   const pr = state.paaProg;
   $('#paa-prog').hidden = !state.paaWait || !!state.paaError;
-  $('#paa-prog span').textContent = pr ? `Lendo o People Also Ask no Google… ${pr.found} perguntas` : 'Abrindo o Google…';
+  $('#paa-prog span').textContent = pr ? t('paa.reading', { n: pr.found }) : t('paa.opening');
   $('#paa-prog i').style.width = `${pr ? Math.round((pr.done / pr.total) * 100) : 0}%`;
-  $('#paa-msg').textContent = PAA_ERRORS[state.paaError] || '';
+  $('#paa-msg').textContent = PAA_ERRORS.includes(state.paaError) ? t(`paa.e.${state.paaError}`) : '';
   $('#paa-msg').hidden = !$('#paa-msg').textContent;
   $('#paa-install').hidden = ext;
   $('#paa-map').hidden = !paa;
   $('#paa-csv').hidden = !paa;
-  $('#paa-count').textContent = paa ? `${countTree(paa)} perguntas` : '';
+  $('#paa-count').textContent = paa ? t('paa.count', { n: countTree(paa) }) : '';
   // drawMap mede o texto: com #paa escondido as larguras saem 0. showPaa redesenha ao mostrar.
   if (paa && !$('#paa').hidden) drawMap($('#paa-map'), paa);
   if (state.keyword) {
     $('#paa-open').href = `https://www.google.com/search?${new URLSearchParams({ q: state.keyword, hl: state.hl, gl: state.gl })}`;
-    $('#paa-open').textContent = `abrir “${state.keyword}” no Google`;
+    $('#paa-open').textContent = t('paa.openKw', { kw: state.keyword });
   }
 }
 
@@ -488,7 +499,7 @@ function startResults(kw, hl, gl) {
   $('#panels').replaceChildren();
   $('#overview').hidden = $('#list').hidden = true;
   $('#list-q').value = '';
-  $('#res-title').textContent = `Resultados para “${kw}”`;
+  $('#res-title').textContent = t('res.title', { kw });
   document.body.classList.add('has-results');
   $('#results').hidden = false;
   // PAA e "Copiar link" só depois do primeiro resultado: durante a espera, só o progresso das fontes
@@ -497,9 +508,11 @@ function startResults(kw, hl, gl) {
 
 // ---------- UI ----------
 
-function setStatus(text, frac) {
+// setStatus('chave', fração, { vars }): guarda a chave para retraduzir quando o idioma muda.
+function setStatus(key, frac, vars) {
+  state.status = [key, frac, vars];
   $('#status').hidden = false;
-  $('#status span').textContent = text;
+  $('#status span').textContent = t(key, vars);
   $('#status i').style.width = `${Math.round((frac ?? 0) * 100)}%`;
 }
 
@@ -508,12 +521,7 @@ function setStatus(text, frac) {
 const hasExt = () => !!document.documentElement.dataset.askwheelExt;
 // Erros em que a aba do Google fica aberta para o usuário resolver: o pedido continua valendo.
 const PAA_PENDING = ['captcha', 'blocked', 'timeout'];
-const PAA_ERRORS = {
-  empty: 'O Google não mostrou a caixa “As pessoas também perguntam” para esta busca.',
-  captcha: 'O Google pediu uma verificação. Resolva na aba que abriu: a coleta continua sozinha.',
-  blocked: 'O Google abriu uma tela intermediária (cookies ou login). Resolva na aba que abriu: a coleta continua sozinha.',
-  timeout: 'O Google está demorando para responder. Se nada mudar, busque de novo ou use o favorito (aba Extensão PAA).',
-};
+const PAA_ERRORS = ['empty', 'captcha', 'blocked', 'timeout']; // textos em i18n.js: paa.e.<erro>
 // Sem notícia da extensão por esse tempo, avisa (mas continua aceitando a resposta, se ela chegar).
 const PAA_SILENCE = 30000;
 let paaTimer;
@@ -563,24 +571,24 @@ async function search(kw, hl, gl, paa = null) {
   const prog = {};
   const tick = () => {
     const d = Object.values(prog).reduce((s, x) => s + x[0], 0), n = Object.values(prog).reduce((s, x) => s + x[1], 0);
-    setStatus(`Consultando Google e Google Shopping… ${d}/${n}`, n ? d / n : 0);
+    setStatus('st.querying', n ? d / n : 0, { d, n });
   };
   tick();
   // Um espaço por fonte, na ordem de SITE_SOURCES: cada uma mostra o próprio progresso e vira painel ao terminar.
   const slots = Object.fromEntries(SITE_SOURCES.map((src) => {
     const el = $('#panels').appendChild(document.createElement('section'));
     el.className = 'panel pending';
-    el.innerHTML = `<div class="res-head"><h2>${esc(srcLabel(src))} <small>consultando…</small></h2></div>`;
+    el.innerHTML = `<div class="res-head"><h2>${esc(srcLabel(src))} <small>${t('slot.querying')}</small></h2></div>`;
     return [src, el];
   }));
   const slotNote = (src, text) => (slots[src].querySelector('small').textContent = text);
   try {
     const runs = await Promise.all(SITE_SOURCES.map((src) => collect(kw, hl, gl, src, (d, n) => {
       prog[src] = [d, n];
-      slotNote(src, `consultando ${d}/${n}`);
+      slotNote(src, t('slot.prog', { d, n }));
       tick();
     }).then((r) => {
-      if (r.failed === r.total) slotNote(src, 'não respondeu');
+      if (r.failed === r.total) slotNote(src, t('slot.fail'));
       else {
         addPanel(r.data, slots[src]);
         showPaa();
@@ -596,13 +604,13 @@ async function search(kw, hl, gl, paa = null) {
     if (failed === total) {
       $('#panels').replaceChildren();
       if (state.paa || state.paaWait) showPaa();
-      return setStatus('O Google não respondeu. Um bloqueador de anúncios ou a rede pode estar impedindo as consultas.', 0);
+      return setStatus('st.fail', 0);
     }
-    setStatus(failed ? `Pronto. ${failed} de ${total} consultas falharam.` : 'Pronto.', 1);
+    setStatus(failed ? 'st.partial' : 'st.done', 1, { f: failed, n: total });
     history.replaceState(null, '', `?${new URLSearchParams({ q: kw, hl, gl })}`);
   } catch {
     document.querySelectorAll('#panels .pending').forEach((el) => el.remove());
-    setStatus('Algo deu errado na busca. Recarregue a página e tente de novo.', 0);
+    setStatus('st.error', 0);
   } finally {
     $('#go').disabled = false;
     $('#status').setAttribute('aria-busy', 'false');
@@ -636,7 +644,7 @@ function download(name, text, type) {
   setTimeout(() => URL.revokeObjectURL(a.href), 1000);
 }
 
-async function copy(text, btn, done = 'Copiado') {
+async function copy(text, btn, done = t('copied')) {
   try { await navigator.clipboard.writeText(text); } catch { return; }
   const old = btn.innerHTML;
   btn.innerHTML = done;
@@ -660,8 +668,8 @@ const siteUrl = () => {
 function installCommand() {
   const origin = siteUrl();
   // Um curl só, com --fail-early: qualquer arquivo que falhe impede o "instalada".
-  const files = [...['SKILL.md', 'collect.py', 'render.py'].map((f) => [`skill/${f}`, f]), ...['index.html', 'app.js', 'style.css', 'modifiers.json'].map((f) => [f, `site/${f}`])];
-  return `d=~/.claude/skills/askwheel; mkdir -p "$d/site" && curl -fsSL --fail-early ${files.map(([url, out]) => `-o "$d/${out}" ${origin}${url}`).join(' ')} && echo "AskWheel skill instalada em $d"`;
+  const files = [...['SKILL.md', 'collect.py', 'render.py'].map((f) => [`skill/${f}`, f]), ...['index.html', 'i18n.js', 'app.js', 'style.css', 'modifiers.json'].map((f) => [f, `site/${f}`])];
+  return `d=~/.claude/skills/askwheel; mkdir -p "$d/site" && curl -fsSL --fail-early ${files.map(([url, out]) => `-o "$d/${out}" ${origin}${url}`).join(' ')} && echo "${t('install.done')} $d"`;
 }
 
 // O código do bookmarklet fica legível em paa.js; aqui vira um link javascript: com o endereço do site.
@@ -669,8 +677,8 @@ async function setupBookmarklet() {
   try {
     const code = (await fetch('paa.js').then((r) => r.text())).replace('__SITE__', () => siteUrl());
     $('#paa-bm').href = 'javascript:' + encodeURIComponent(code);
-  } catch { $('#paa-bm').replaceWith('(indisponível nesta cópia offline)'); }
-  $('#paa-bm')?.addEventListener('click', (e) => { e.preventDefault(); $('#bm-msg').textContent = 'Arraste o botão para a barra de favoritos em vez de clicar nele.'; });
+  } catch { $('#paa-bm').replaceWith(t('bm.offline')); }
+  $('#paa-bm')?.addEventListener('click', (e) => { e.preventDefault(); $('#bm-msg').textContent = t('bm.drag'); });
 }
 
 // Dados que o bookmarklet traz do Google em #paa=. Vêm de fora: só passam se tiverem a forma esperada.
@@ -701,16 +709,51 @@ function defaults() {
   return { hl, gl };
 }
 
+// Idioma da interface: o salvo, senão o do navegador (se for pt/en/it), senão inglês.
+function pickLang() {
+  let saved;
+  try { saved = localStorage.getItem('askwheel-lang'); } catch {}
+  const nav = (navigator.language || '').slice(0, 2).toLowerCase();
+  return [saved, nav].find((l) => UI_LANGS.includes(l)) || 'en';
+}
+
+// save: só quando o usuário escolhe (o idioma detectado do navegador não fica gravado).
+function setLang(l, save = false) {
+  uiLang = UI_LANGS.includes(l) ? l : 'en';
+  if (save) try { localStorage.setItem('askwheel-lang', uiLang); } catch {}
+  $('#ui-lang').value = uiLang;
+  applyI18n();
+  $('#install-cmd').textContent = installCommand();
+  $('#bm-msg').textContent = '';
+  if (state.status) setStatus(...state.status);
+  if (state.keyword) $('#res-title').textContent = t('res.title', { kw: state.keyword });
+  // Painéis: recria com os textos novos, mantendo vista e grupo. Um elemento novo (cloneNode sem filhos)
+  // descarta o listener antigo.
+  const old = state.panels;
+  state.panels = [];
+  old.forEach(({ data, el, view, group }) => {
+    const fresh = el.cloneNode(false);
+    el.replaceWith(fresh);
+    addPanel(data, fresh);
+    const p = state.panels.at(-1);
+    Object.assign(p, { view, group });
+    fresh.querySelectorAll('.seg button').forEach((b) => b.setAttribute('aria-pressed', b.dataset.view === view));
+    renderPanel(p);
+  });
+  if (state.keyword) renderPaa();
+}
+
 const setSelect = (id, v) => { if ([...$(`#${id}`).options].some((o) => o.value === v)) $(`#${id}`).value = v; };
 
 function init() {
+  setLang(pickLang());
+  $('#ui-lang').addEventListener('change', (e) => setLang(e.target.value, true));
   const params = new URLSearchParams(location.search);
   const d = defaults();
   $('#hl').value = d.hl;
   $('#gl').value = d.gl;
   setSelect('hl', params.get('hl'));
   setSelect('gl', params.get('gl'));
-  $('#install-cmd').textContent = installCommand();
   setupBookmarklet();
 
   document.querySelectorAll('.tabs button').forEach((b) => b.addEventListener('click', () => selectTab(b.dataset.tab)));
@@ -755,8 +798,7 @@ function init() {
     $('#paa').hidden = true;
     addPanel(data);
     if (SKILL_SOURCES[data.src]) {
-      const de = srcMeta(data.src).prep === 'na' ? 'da' : 'do';
-      setStatus(`Dados ${de} ${srcLabel(data.src)} coletados pela skill. Buscar aqui consulta ao vivo Google e Google Shopping.`, 1);
+      setStatus('st.skill', 1, { src: srcLabel(data.src) });
     }
   } else if (params.get('q')) {
     $('#q').value = params.get('q');

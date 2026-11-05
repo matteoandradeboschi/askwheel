@@ -6,12 +6,13 @@ Free, static search-listening site (AnswerThePublic-style): one search box: keyw
 
 - `public/` is the deploy root (upload as-is to Cloudflare Pages).
 - `public/app.js`: collection (`buildPlan`, `jsonp`, `assemble`), panels (wheel, table, extras), PAA map (`drawMap`), UI. Also renders preloaded data from `window.__WHEEL_DATA__` (used by the skill's standalone HTML).
+- `public/i18n.js`: UI strings (`I18N.pt|en|it`). `index.html` marks elements with `data-i18n` (innerHTML), `data-i18n-ph`, `data-i18n-label`, `data-i18n-content` and keeps the pt text as fallback; `app.js` uses `t('key', { vars })`. UI language: saved in `localStorage` (`askwheel-lang`), else browser language, else en; switch in the header (`#ui-lang`). Separate from the search language (`#hl`, modifiers).
 - `public/paa.js`: PAA bookmarklet source. `app.js` fetches it, replaces `'__SITE__'` with the site URL and sets it as the `javascript:` link. No `//` comments (it becomes a URL). Keep the `void` before the IIFE: Firefox replaces the page with a bookmarklet's return value. Depends on Google's DOM (`.related-question-pair[data-q]`, `[role=button][aria-expanded]`): breaks if Google changes it.
 - `extension/`: optional browser extension (MV3, one code for Chrome/Firefox, no build) that fetches PAA automatically: `site.js` (content script on the site, `postMessage` bridge, sets `data-askwheel-ext`), `background.js` (opens Google in a background tab, injects `readPaa`, a copy of the `paa.js` logic: change both together). Site domains are hardcoded in `manifest.json` `matches` (no `localhost` in the distributed manifest/zip; for local dev add it by hand, see `extension/README.md`). Served to visitors as `public/askwheel-paa.zip` (install steps in the **Extensão PAA** tab): after changing the extension, regenerate it with `cd extension && zip -qr ../public/askwheel-paa.zip manifest.json background.js site.js`.
 - `public/modifiers.json`: modifiers per language. Single source for site and skill.
 - `public/skill/`: optional Claude Code skill, served by the site and installed with the command in the **Skill p/ Claude Code** tab.
   - `collect.py`: same collection logic as `app.js` in Python (stdlib only). Also has skill-only sources `amazon`, `tiktok`, `trends` (`LOCAL_SOURCES`); `app.js` knows them only in `SKILL_SOURCES` (label/link for preloaded data).
-  - `render.py`: inlines `site/index.html`, `style.css`, `app.js`, `modifiers.json` + data (+ Claude extras) into one HTML.
+  - `render.py`: inlines `site/index.html`, `style.css`, `i18n.js`, `app.js`, `modifiers.json` + data (+ Claude extras) into one HTML.
 
 ## Rules
 
@@ -19,7 +20,7 @@ Free, static search-listening site (AnswerThePublic-style): one search box: keyw
 - Keep both on the same endpoint params (`SOURCES` in each file: `client=chrome`, `ie/oe=utf-8`, `ds=yt|sh`; Bing `qsonhs.aspx`, skipping `Type: "SC"`). Python omits only the JSONP wiring: `callback=` for Google/YouTube/Shopping, `type=cb&cb=` for Bing (with `type=cb` Bing returns JS, not JSON).
 - No build step, no npm deps. D3 from cdnjs pinned to `7.9.0` with SRI (`integrity` in `index.html`: update the hash if the version changes).
 - `public/_headers` (Cloudflare Pages) sets the CSP: a new external script host (CDN, JSONP endpoint) must be added to `script-src`, or it is blocked.
-- UI copy in Portuguese, sentence case.
+- UI copy lives in `public/i18n.js`, sentence case: add every new string in pt, en and it.
 
 ## Test locally
 
