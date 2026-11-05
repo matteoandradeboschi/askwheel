@@ -373,7 +373,7 @@ const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&l
 function drawTable(el, data, group) {
   const mods = group.modifiers.filter((m) => m.items.length);
   el.innerHTML = mods.length
-    ? mods.map((m) => `<div class="block"><h3>${esc(m.name ?? 'relacionadas')} <small>${m.items.length}</small></h3><ul class="rows">${
+    ? mods.map((m) => `<div class="block"><h3>${esc(m.name ?? groupLabel('related').toLowerCase())} <small>${m.items.length}</small></h3><ul class="rows">${
         m.items.map((t) => `<li>${plusBtn(t)}${linkTo(data, t)}</li>`).join('')
       }</ul></div>`).join('')
     : `<p class="empty">${t('empty.group')}</p>`;
@@ -644,7 +644,7 @@ function download(name, text, type) {
   setTimeout(() => URL.revokeObjectURL(a.href), 1000);
 }
 
-async function copy(text, btn, done = 'Copiado') {
+async function copy(text, btn, done = t('copied')) {
   try { await navigator.clipboard.writeText(text); } catch { return; }
   const old = btn.innerHTML;
   btn.innerHTML = done;
@@ -717,22 +717,28 @@ function pickLang() {
   return [saved, nav].find((l) => UI_LANGS.includes(l)) || 'en';
 }
 
-function setLang(l) {
+// save: só quando o usuário escolhe (o idioma detectado do navegador não fica gravado).
+function setLang(l, save = false) {
   uiLang = UI_LANGS.includes(l) ? l : 'en';
-  try { localStorage.setItem('askwheel-lang', uiLang); } catch {}
+  if (save) try { localStorage.setItem('askwheel-lang', uiLang); } catch {}
   $('#ui-lang').value = uiLang;
   applyI18n();
   $('#install-cmd').textContent = installCommand();
   $('#bm-msg').textContent = '';
   if (state.status) setStatus(...state.status);
   if (state.keyword) $('#res-title').textContent = t('res.title', { kw: state.keyword });
-  // Painéis: recria com os textos novos. Um elemento novo (cloneNode sem filhos) descarta o listener antigo.
-  const old = state.panels.map((p) => [p.data, p.el]);
+  // Painéis: recria com os textos novos, mantendo vista e grupo. Um elemento novo (cloneNode sem filhos)
+  // descarta o listener antigo.
+  const old = state.panels;
   state.panels = [];
-  old.forEach(([data, el]) => {
+  old.forEach(({ data, el, view, group }) => {
     const fresh = el.cloneNode(false);
     el.replaceWith(fresh);
     addPanel(data, fresh);
+    const p = state.panels.at(-1);
+    Object.assign(p, { view, group });
+    fresh.querySelectorAll('.seg button').forEach((b) => b.setAttribute('aria-pressed', b.dataset.view === view));
+    renderPanel(p);
   });
   if (state.keyword) renderPaa();
 }
@@ -741,14 +747,13 @@ const setSelect = (id, v) => { if ([...$(`#${id}`).options].some((o) => o.value 
 
 function init() {
   setLang(pickLang());
-  $('#ui-lang').addEventListener('change', (e) => setLang(e.target.value));
+  $('#ui-lang').addEventListener('change', (e) => setLang(e.target.value, true));
   const params = new URLSearchParams(location.search);
   const d = defaults();
   $('#hl').value = d.hl;
   $('#gl').value = d.gl;
   setSelect('hl', params.get('hl'));
   setSelect('gl', params.get('gl'));
-  $('#install-cmd').textContent = installCommand();
   setupBookmarklet();
 
   document.querySelectorAll('.tabs button').forEach((b) => b.addEventListener('click', () => selectTab(b.dataset.tab)));
