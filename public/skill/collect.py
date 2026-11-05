@@ -145,10 +145,11 @@ def assemble(kw, plan, results, hl, gl, src):
             if key == norm(q):
                 continue
             by_word = group in ("alphabeticals", "numbers") or has_token(s, mod or "")
+            # Cada sugestão fica só no primeiro modificador (na ordem do plano) em que se encaixa.
             if group != "related" and has_keyword(s, kw) and by_word:
-                if all(norm(x) != key for x in m["items"]):
+                if key not in assigned:
                     m["items"].append(s)
-                assigned.add(key)
+                    assigned.add(key)
             else:
                 leftovers.append(s)
     rel = groups["related"]["modifiers"][0]

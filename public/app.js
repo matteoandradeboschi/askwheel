@@ -73,7 +73,7 @@ function buildPlan(kw, m) {
 }
 
 // Mesma regra do collect.py: a sugestão fica no modificador se contém a keyword
-// (e o modificador, quando é palavra); o resto vai para "related".
+// (e o modificador, quando é palavra); o resto vai para "related". Cada sugestão aparece uma vez só.
 function assemble(kw, plan, results, meta) {
   const groups = {};
   const assigned = new Set();
@@ -87,9 +87,9 @@ function assemble(kw, plan, results, meta) {
       if (key === norm(step.q)) continue;
       const byWord = step.group === 'alphabeticals' || step.group === 'numbers' || hasToken(s, step.mod ?? '');
       const fits = step.group !== 'related' && hasKeyword(s, kw) && byWord;
+      // Cada sugestão fica só no primeiro modificador (na ordem do plano) em que se encaixa.
       if (fits) {
-        if (!m.items.some((x) => norm(x) === key)) m.items.push(s);
-        assigned.add(key);
+        if (!assigned.has(key)) { m.items.push(s); assigned.add(key); }
       } else leftovers.push(s);
     }
   });
