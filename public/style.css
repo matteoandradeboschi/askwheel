@@ -57,6 +57,11 @@ code, pre { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-si
 }
 .tabs button:hover { color: var(--text); background: var(--chip); }
 .tabs button[aria-current="page"] { color: var(--text); font-weight: 600; }
+#ui-lang {
+  min-height: 44px; padding: 0 6px; border: 0; border-radius: 8px; background: none;
+  color: var(--muted); cursor: pointer; font: inherit; font-size: 14px;
+}
+#ui-lang:hover { color: var(--text); background: var(--chip); }
 .seg button, .chips button, .ghost {
   display: inline-flex; align-items: center; min-height: 44px;
   border: 1px solid var(--ctrl); background: var(--surface); color: var(--text); text-decoration: none;

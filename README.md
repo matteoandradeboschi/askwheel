@@ -7,7 +7,7 @@ Alternativa grátis de *search listening*: digite uma palavra-chave e veja, numa
 ```
 extension/              # extensão do navegador que traz o PAA sozinho (vai para o site como public/askwheel-paa.zip)
 public/                 # tudo que vai para o Cloudflare Pages
-  index.html style.css app.js
+  index.html style.css i18n.js app.js
   paa.js                # bookmarklet do People Also Ask
   modifiers.json        # modificadores por idioma (fonte única: site + skill)
   skill/                # skill opcional para Claude Code, servida pelo próprio site
@@ -41,7 +41,7 @@ A aba **Skill p/ Claude Code** monta o comando de instalação com o endereço d
 
 ## Skill (opcional)
 
-A skill coleta os mesmos dados (`collect.py`, mesma lógica do `app.js`), acrescenta análise do Claude (intenção, clusters, pautas, perguntas prioritárias) e gera um HTML único reaproveitando o site (`render.py` embute `index.html`, `style.css`, `app.js` e os dados). Os dados extras aparecem na aba **Extras (Claude)**.
+A skill coleta os mesmos dados (`collect.py`, mesma lógica do `app.js`), acrescenta análise do Claude (intenção, clusters, pautas, perguntas prioritárias) e gera um HTML único reaproveitando o site (`render.py` embute `index.html`, `style.css`, `i18n.js`, `app.js` e os dados). Os dados extras aparecem na aba **Extras (Claude)**.
 
 ## Limitações
 

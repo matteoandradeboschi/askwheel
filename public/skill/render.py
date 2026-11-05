@@ -2,7 +2,7 @@
 """Gera um HTML único (offline, exceto o D3 via CDN) reaproveitando o site do AskWheel.
 
 Uso: python3 render.py dados.json [extras.json] -o relatorio.html
-Embute style.css, app.js, modifiers.json e os dados no index.html copiado do site.
+Embute style.css, i18n.js, app.js, modifiers.json e os dados no index.html copiado do site.
 """
 import argparse
 import json
@@ -31,9 +31,11 @@ def main():
     html = (SITE / "index.html").read_text(encoding="utf-8")
     css = (SITE / "style.css").read_text(encoding="utf-8")
     js = (SITE / "app.js").read_text(encoding="utf-8").replace("</script", "<\\/script")
+    i18n = (SITE / "i18n.js").read_text(encoding="utf-8").replace("</script", "<\\/script")
     mods = json.loads((SITE / "modifiers.json").read_text(encoding="utf-8"))
 
     html = html.replace('<link rel="stylesheet" href="style.css">', f"<style>\n{css}</style>")
+    html = html.replace('<script src="i18n.js"></script>', f"<script>\n{i18n}</script>")
     html = html.replace(
         '<script src="app.js"></script>',
         f"<script>window.__WHEEL_MODIFIERS__={safe_json(mods)};\n"

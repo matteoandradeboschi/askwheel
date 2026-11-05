@@ -4,153 +4,159 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>AskWheel</title>
-<meta name="description" content="Veja o que as pessoas buscam no Google e no Google Shopping, e o People Also Ask, sobre qualquer palavra-chave. Grátis, sem cadastro.">
+<meta name="description" data-i18n-content="meta.desc" content="Veja o que as pessoas buscam no Google e no Google Shopping, e o People Also Ask, sobre qualquer palavra-chave. Grátis, sem cadastro.">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 <header class="top">
   <a class="brand" href="./" data-goto="search">Ask<span>Wheel</span></a>
   <form id="form" class="search">
-    <input id="q" name="q" type="search" aria-label="Palavra-chave" placeholder="ex.: caffè, juros compostos, bicicleta elétrica" autocomplete="off" required>
-    <select id="hl" name="hl" aria-label="Idioma">
+    <input id="q" name="q" type="search" data-i18n-label="q.label" data-i18n-ph="q.ph" aria-label="Palavra-chave" placeholder="ex.: caffè, juros compostos, bicicleta elétrica" autocomplete="off" required>
+    <select id="hl" name="hl" data-i18n-label="hl.label" aria-label="Idioma da busca">
       <option value="pt">Português</option>
       <option value="it">Italiano</option>
       <option value="en">English</option>
       <option value="es">Español</option>
     </select>
-    <select id="gl" name="gl" aria-label="País">
-      <option value="it">Itália</option>
-      <option value="br">Brasil</option>
-      <option value="pt">Portugal</option>
-      <option value="us">EUA</option>
-      <option value="gb">Reino Unido</option>
-      <option value="es">Espanha</option>
-      <option value="fr">França</option>
-      <option value="de">Alemanha</option>
+    <select id="gl" name="gl" data-i18n-label="gl.label" aria-label="País">
+      <option value="it" data-i18n="c.it">Itália</option>
+      <option value="br" data-i18n="c.br">Brasil</option>
+      <option value="pt" data-i18n="c.pt">Portugal</option>
+      <option value="us" data-i18n="c.us">EUA</option>
+      <option value="gb" data-i18n="c.gb">Reino Unido</option>
+      <option value="es" data-i18n="c.es">Espanha</option>
+      <option value="fr" data-i18n="c.fr">França</option>
+      <option value="de" data-i18n="c.de">Alemanha</option>
     </select>
-    <button id="go" type="submit">Buscar</button>
+    <button id="go" type="submit" data-i18n="go">Buscar</button>
   </form>
-  <nav class="tabs" aria-label="Páginas">
-    <button data-tab="ext" class="desk">Extensão PAA</button>
-    <button data-tab="skill" class="desk">Skill p/ Claude Code</button>
-    <button data-tab="about">Como funciona</button>
+  <nav class="tabs" data-i18n-label="nav.label" aria-label="Páginas">
+    <button data-tab="ext" class="desk" data-i18n="nav.ext">Extensão PAA</button>
+    <button data-tab="skill" class="desk" data-i18n="nav.skill">Skill p/ Claude Code</button>
+    <button data-tab="about" data-i18n="nav.about">Como funciona</button>
+    <select id="ui-lang" data-i18n-label="ui.label" aria-label="Idioma do site">
+      <option value="pt">PT</option>
+      <option value="en">EN</option>
+      <option value="it">IT</option>
+    </select>
   </nav>
 </header>
 
 <main>
   <section id="tab-search" class="tab">
     <div class="hero">
-      <h1>O que as pessoas buscam na internet?</h1>
-      <p class="muted">Digite uma palavra-chave e veja, numa busca só, o autocomplete do Google e do Google Shopping (perguntas, preposições, comparações, a–z, 0–9, relacionadas) e o mapa do People Also Ask. Grátis, sem cadastro.</p>
+      <h1 data-i18n="hero.h">O que as pessoas buscam na internet?</h1>
+      <p data-i18n="hero.p" class="muted">Digite uma palavra-chave e veja, numa busca só, o autocomplete do Google e do Google Shopping (perguntas, preposições, comparações, a–z, 0–9, relacionadas) e o mapa do People Also Ask. Grátis, sem cadastro.</p>
     </div>
     <div id="status" class="status" aria-live="polite" hidden><div class="bar"><i></i></div><span></span></div>
 
     <div id="results" hidden>
       <div class="res-head">
         <h1 id="res-title"></h1>
-        <div class="actions"><button id="share" class="ghost">Copiar link</button></div>
+        <div class="actions"><button data-i18n="share" id="share" class="ghost">Copiar link</button></div>
       </div>
       <section id="overview" class="panel" hidden>
-        <div class="res-head"><h2>Visão geral</h2></div>
+        <div class="res-head"><h2 data-i18n="overview">Visão geral</h2></div>
         <div class="wheel"></div>
       </section>
       <div id="panels"></div>
       <section id="paa" class="panel">
         <div id="paa-head" class="res-head">
           <h2>People Also Ask <small id="paa-count"></small></h2>
-          <div class="actions"><button id="paa-csv" class="ghost" hidden>Baixar CSV</button></div>
+          <div class="actions"><button data-i18n="csv" id="paa-csv" class="ghost" hidden>Baixar CSV</button></div>
         </div>
         <div id="paa-help" class="paa-help">
           <div id="paa-prog" class="status" hidden><div class="bar"><i></i></div><span></span></div>
           <p id="paa-msg" aria-live="polite" hidden></p>
           <div id="paa-install" class="paa-line">
-            <p><b>Mapa de perguntas</b> <span class="muted">(People Also Ask): instale a extensão no computador.</span></p>
-            <a class="ghost" href="#" data-goto="ext">Instalar extensão</a>
+            <p data-i18n="paa.install"><b>Mapa de perguntas</b> <span class="muted">(People Also Ask): instale a extensão no computador.</span></p>
+            <a data-i18n="paa.installBtn" class="ghost" href="#" data-goto="ext">Instalar extensão</a>
           </div>
         </div>
         <div id="paa-map" class="map" hidden></div>
       </section>
       <section id="list" class="panel" hidden>
         <div class="res-head">
-          <h2>Todas as sugestões <small id="list-count"></small></h2>
-          <div class="actions"><input id="list-q" type="search" placeholder="Filtrar" aria-label="Filtrar sugestões"></div>
+          <h2><span data-i18n="list.title">Todas as sugestões</span> <small id="list-count"></small></h2>
+          <div class="actions"><input id="list-q" type="search" data-i18n-ph="list.ph" data-i18n-label="list.label" placeholder="Filtrar" aria-label="Filtrar sugestões"></div>
         </div>
         <div id="list-groups" class="chips"></div>
-        <div class="list-wrap"><table class="list"><thead><tr><th>Sugestão</th><th>Fonte</th><th>Modificador</th></tr></thead><tbody></tbody></table></div>
+        <div class="list-wrap"><table class="list"><thead><tr><th data-i18n="th.sug">Sugestão</th><th data-i18n="th.src">Fonte</th><th data-i18n="th.mod">Modificador</th></tr></thead><tbody></tbody></table></div>
       </section>
     </div>
   </section>
 
   <section id="tab-ext" class="tab prose" hidden>
-    <h1>Extensão AskWheel PAA</h1>
-    <p>Com a extensão, o People Also Ask do Google aparece sozinho a cada busca: ela abre a busca no Google numa aba em segundo plano, lê as perguntas, traz o mapa para cá e fecha a aba. Não guarda nada e não envia dados para nenhum outro lugar.</p>
-    <p><a class="bm" href="askwheel-paa.zip" download>Baixar a extensão (.zip)</a></p>
-    <h2>Chrome, Edge, Brave, Opera, Vivaldi</h2>
+    <h1 data-i18n="ext.h">Extensão AskWheel PAA</h1>
+    <p data-i18n="ext.p">Com a extensão, o People Also Ask do Google aparece sozinho a cada busca: ela abre a busca no Google numa aba em segundo plano, lê as perguntas, traz o mapa para cá e fecha a aba. Não guarda nada e não envia dados para nenhum outro lugar.</p>
+    <p><a data-i18n="ext.dl" class="bm" href="askwheel-paa.zip" download>Baixar a extensão (.zip)</a></p>
+    <h2 data-i18n="ext.chromeH">Chrome, Edge, Brave, Opera, Vivaldi</h2>
     <ol>
-      <li>Descompacte o .zip numa pasta que você não vai apagar.</li>
-      <li>Abra <code>chrome://extensions</code> (no Opera, <code>opera://extensions</code>) e ligue o <b>Modo do desenvolvedor</b>.</li>
-      <li>Clique em <b>Carregar sem compactação</b> e escolha a pasta.</li>
+      <li data-i18n="ext.c1">Descompacte o .zip numa pasta que você não vai apagar.</li>
+      <li data-i18n="ext.c2">Abra <code>chrome://extensions</code> (no Opera, <code>opera://extensions</code>) e ligue o <b>Modo do desenvolvedor</b>.</li>
+      <li data-i18n="ext.c3">Clique em <b>Carregar sem compactação</b> e escolha a pasta.</li>
     </ol>
     <h2>Firefox</h2>
     <ol>
-      <li>Descompacte o .zip.</li>
-      <li>Abra <code>about:debugging#/runtime/this-firefox</code> e clique em <b>Carregar extensão temporária</b>.</li>
-      <li>Escolha o arquivo <code>manifest.json</code> da pasta. A extensão some quando o Firefox fecha.</li>
+      <li data-i18n="ext.f1">Descompacte o .zip.</li>
+      <li data-i18n="ext.f2">Abra <code>about:debugging#/runtime/this-firefox</code> e clique em <b>Carregar extensão temporária</b>.</li>
+      <li data-i18n="ext.f3">Escolha o arquivo <code>manifest.json</code> da pasta. A extensão some quando o Firefox fecha.</li>
     </ol>
-    <p>Depois, recarregue esta página e busque. Se o Google pedir verificação ou mostrar a tela de cookies, a aba dele fica aberta para você resolver.</p>
-    <h2>Sem extensão: usar um favorito</h2>
+    <p data-i18n="ext.after">Depois, recarregue esta página e busque. Se o Google pedir verificação ou mostrar a tela de cookies, a aba dele fica aberta para você resolver.</p>
+    <h2 data-i18n="ext.bmH">Sem extensão: usar um favorito</h2>
     <ol>
-      <li>Arraste este botão para a barra de favoritos (só na primeira vez): <a id="paa-bm" class="bm" href="#">AskWheel PAA</a> <span id="bm-msg" class="muted" aria-live="polite"></span></li>
-      <li>Busque a palavra no Google (ou <a id="paa-open" target="_blank" rel="noopener" href="https://www.google.com/">abra o Google</a>) e, na página de resultados, clique no favorito.</li>
-      <li>Em uns 20 segundos você volta para cá com tudo: as rodas e o mapa de perguntas.</li>
+      <li><span data-i18n="ext.b1">Arraste este botão para a barra de favoritos (só na primeira vez):</span> <a id="paa-bm" class="bm" href="#">AskWheel PAA</a> <span id="bm-msg" class="muted" aria-live="polite"></span></li>
+      <li><span data-i18n="ext.b2a">Busque a palavra no Google (ou</span> <a id="paa-open" target="_blank" rel="noopener" href="https://www.google.com/" data-i18n="ext.b2link">abra o Google</a><span data-i18n="ext.b2b">) e, na página de resultados, clique no favorito.</span></li>
+      <li data-i18n="ext.b3">Em uns 20 segundos você volta para cá com tudo: as rodas e o mapa de perguntas.</li>
     </ol>
   </section>
 
   <section id="tab-skill" class="tab prose" hidden>
-    <h1>Skill para Claude Code</h1>
-    <p>Opcional. O site cobre a coleta e a visualização. A skill faz o mesmo dentro do <a href="https://claude.com/claude-code" target="_blank" rel="noopener">Claude Code</a> e acrescenta o que o site não faz:</p>
+    <h1 data-i18n="skill.h">Skill para Claude Code</h1>
+    <p data-i18n="skill.p">Opcional. O site cobre a coleta e a visualização. A skill faz o mesmo dentro do <a href="https://claude.com/claude-code" target="_blank" rel="noopener">Claude Code</a> e acrescenta o que o site não faz:</p>
     <ul>
-      <li>Agrupa as sugestões por <b>intenção</b> (informacional, comercial, transacional, navegacional).</li>
-      <li>Junta as sugestões em <b>clusters de tópicos</b>.</li>
-      <li>Sugere <b>pautas de conteúdo</b> (títulos e palavras-chave-alvo) e as <b>perguntas prioritárias</b> para responder.</li>
-      <li>Gera um HTML único, offline, com este mesmo relatório e uma aba extra <b>Extras (Claude)</b>.</li>
+      <li data-i18n="skill.l1">Agrupa as sugestões por <b>intenção</b> (informacional, comercial, transacional, navegacional).</li>
+      <li data-i18n="skill.l2">Junta as sugestões em <b>clusters de tópicos</b>.</li>
+      <li data-i18n="skill.l3">Sugere <b>pautas de conteúdo</b> (títulos e palavras-chave-alvo) e as <b>perguntas prioritárias</b> para responder.</li>
+      <li data-i18n="skill.l4">Gera um HTML único, offline, com este mesmo relatório e uma aba extra <b>Extras (Claude)</b>.</li>
     </ul>
-    <h2>Instalar</h2>
-    <p>Cole no terminal (Linux/macOS). Baixa os arquivos da skill e do site para <code>~/.claude/skills/askwheel</code>. É código que o Claude Code vai executar no seu computador: se quiser, confira antes os arquivos listados abaixo.</p>
-    <div class="code"><pre id="install-cmd"></pre><button class="ghost copy" data-copy="install-cmd">Copiar</button></div>
-    <p>Depois, no Claude Code:</p>
-    <div class="code"><pre id="usage-cmd">/askwheel caffè --hl it --gl it</pre><button class="ghost copy" data-copy="usage-cmd">Copiar</button></div>
-    <p class="muted">Requisitos: Python 3 (só a biblioteca padrão, nada para instalar). Para atualizar, rode o comando de instalação de novo. Arquivos: <a href="skill/SKILL.md" target="_blank">SKILL.md</a>, <a href="skill/collect.py" target="_blank">collect.py</a>, <a href="skill/render.py" target="_blank">render.py</a>.</p>
+    <h2 data-i18n="skill.installH">Instalar</h2>
+    <p data-i18n="skill.installP">Cole no terminal (Linux/macOS). Baixa os arquivos da skill e do site para <code>~/.claude/skills/askwheel</code>. É código que o Claude Code vai executar no seu computador: se quiser, confira antes os arquivos listados abaixo.</p>
+    <div class="code"><pre id="install-cmd"></pre><button class="ghost copy" data-copy="install-cmd" data-i18n="copy">Copiar</button></div>
+    <p data-i18n="skill.then">Depois, no Claude Code:</p>
+    <div class="code"><pre id="usage-cmd">/askwheel caffè --hl it --gl it</pre><button class="ghost copy" data-copy="usage-cmd" data-i18n="copy">Copiar</button></div>
+    <p class="muted"><span data-i18n="skill.req">Requisitos: Python 3 (só a biblioteca padrão, nada para instalar). Para atualizar, rode o comando de instalação de novo. Arquivos:</span> <a href="skill/SKILL.md" target="_blank">SKILL.md</a>, <a href="skill/collect.py" target="_blank">collect.py</a>, <a href="skill/render.py" target="_blank">render.py</a>.</p>
   </section>
 
   <section id="tab-about" class="tab prose" hidden>
-    <h1>Como funciona</h1>
+    <h1 data-i18n="about.h">Como funciona</h1>
     <ol>
-      <li>A palavra-chave é combinada com modificadores no idioma escolhido: perguntas (<i>como, por que, qual…</i>), preposições (<i>para, com, sem…</i>), comparações (<i>vs, ou…</i>), letras a–z e números 0–9.</li>
-      <li>Cada combinação é enviada ao autocomplete do Google e do Google Shopping <b>direto do seu navegador</b> (cerca de 140 consultas).</li>
-      <li>O People Also Ask é lido na própria página de resultados do Google pela extensão <b>AskWheel PAA</b> (ou por um favorito), que abre as perguntas numa aba em segundo plano e as traz como um mapa.</li>
-      <li>As sugestões são agrupadas por modificador. O que não se encaixa em nenhum vai para <b>Relacionadas</b>.</li>
+      <li data-i18n="about.1">A palavra-chave é combinada com modificadores no idioma escolhido: perguntas (<i>como, por que, qual…</i>), preposições (<i>para, com, sem…</i>), comparações (<i>vs, ou…</i>), letras a–z e números 0–9.</li>
+      <li data-i18n="about.2">Cada combinação é enviada ao autocomplete do Google e do Google Shopping <b>direto do seu navegador</b> (cerca de 140 consultas).</li>
+      <li data-i18n="about.3">O People Also Ask é lido na própria página de resultados do Google pela extensão <b>AskWheel PAA</b> (ou por um favorito), que abre as perguntas numa aba em segundo plano e as traz como um mapa.</li>
+      <li data-i18n="about.4">As sugestões são agrupadas por modificador. O que não se encaixa em nenhum vai para <b>Relacionadas</b>.</li>
     </ol>
-    <h2>Limitações</h2>
+    <h2 data-i18n="about.limH">Limitações</h2>
     <ul>
-      <li>Sem volume de busca nem CPC: não existe fonte gratuita para esses dados.</li>
-      <li>Usa endpoints não oficiais, que podem mudar ou limitar sem aviso.</li>
-      <li>Os resultados variam por idioma, país e momento.</li>
-      <li>Francês e alemão ainda não têm modificadores: para França e Alemanha, escolha o idioma English (outros idiomas usam os modificadores em inglês).</li>
-      <li>Bloqueadores de anúncio podem impedir as consultas.</li>
-      <li>Amazon, TikTok e Google Trends não estão aqui: bloqueiam consultas do navegador (CORS). Existem só na skill para Claude Code.</li>
-      <li>Instagram exige login.</li>
-      <li>People Also Ask só existe na página de resultados do Google: a coleta roda lá, pela extensão ou pelo favorito <b>AskWheel PAA</b>. Precisa de computador e só funciona quando o Google mostra a caixa.</li>
+      <li data-i18n="about.lim1">Sem volume de busca nem CPC: não existe fonte gratuita para esses dados.</li>
+      <li data-i18n="about.lim2">Usa endpoints não oficiais, que podem mudar ou limitar sem aviso.</li>
+      <li data-i18n="about.lim3">Os resultados variam por idioma, país e momento.</li>
+      <li data-i18n="about.lim4">Francês e alemão ainda não têm modificadores: para França e Alemanha, escolha o idioma English (outros idiomas usam os modificadores em inglês).</li>
+      <li data-i18n="about.lim5">Bloqueadores de anúncio podem impedir as consultas.</li>
+      <li data-i18n="about.lim6">Amazon, TikTok e Google Trends não estão aqui: bloqueiam consultas do navegador (CORS). Existem só na skill para Claude Code.</li>
+      <li data-i18n="about.lim7">Instagram exige login.</li>
+      <li data-i18n="about.lim8">People Also Ask só existe na página de resultados do Google: a coleta roda lá, pela extensão ou pelo favorito <b>AskWheel PAA</b>. Precisa de computador e só funciona quando o Google mostra a caixa.</li>
     </ul>
-    <h2>Privacidade</h2>
-    <p>O site é estático: não tem servidor, cadastro nem analytics. As consultas vão do seu navegador direto para o Google.</p>
-    <p class="muted">Inspirado em ferramentas de <i>search listening</i> como o AnswerThePublic. Sem afiliação.</p>
+    <h2 data-i18n="about.privH">Privacidade</h2>
+    <p data-i18n="about.privP">O site é estático: não tem servidor, cadastro nem analytics. As consultas vão do seu navegador direto para o Google.</p>
+    <p data-i18n="about.inspired" class="muted">Inspirado em ferramentas de <i>search listening</i> como o AnswerThePublic. Sem afiliação.</p>
   </section>
 </main>
 
-<footer class="foot muted">AskWheel · grátis e de código aberto · dados do autocomplete do Google e do Google Shopping e do People Also Ask</footer>
+<footer data-i18n="footer" class="foot muted">AskWheel · grátis e de código aberto · dados do autocomplete do Google e do Google Shopping e do People Also Ask</footer>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js" integrity="sha512-vc58qvvBdrDR4etbxMdlTt4GBQk1qjvyORR2nrsPsFPyrs+/u5c3+1Ct6upOgdZoIl7eq6k3a1UPDSNAQi/32A==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="i18n.js"></script>
 <script src="app.js"></script>
 </body>
 </html>
