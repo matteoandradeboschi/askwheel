@@ -7,7 +7,7 @@
   "host_permissions": ["https://www.google.com/*"],
   "background": { "service_worker": "background.js", "scripts": ["background.js"] },
   "content_scripts": [{
-    "matches": ["https://askwheel.pages.dev/*", "https://*.askwheel.pages.dev/*", "http://localhost/*", "http://127.0.0.1/*"],
+    "matches": ["https://askwheel.pages.dev/*", "https://*.askwheel.pages.dev/*"],
     "js": ["site.js"],
     "run_at": "document_start"
   }],

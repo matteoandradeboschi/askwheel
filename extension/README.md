@@ -19,3 +19,13 @@ Depois, recarregue o AskWheel e busque: o mapa de perguntas aparece em uns 20 se
 - `background.js`: abre a aba do Google e injeta `readPaa` (mesma lógica do bookmarklet `public/paa.js`; mudanças no DOM do Google afetam os dois).
 - Captcha ou tela de cookies: a aba do Google fica aberta e visível para o usuário resolver; ao voltar para a busca, a coleta continua sozinha (o script é injetado a cada carregamento da aba).
 - Domínios do site em `manifest.json` (`content_scripts.matches`): ajuste se o site mudar de endereço.
+
+## Desenvolvimento local
+
+O `manifest.json` distribuído só atende `askwheel.pages.dev` (e os previews `*.askwheel.pages.dev`): com `localhost` nos `matches`, qualquer app rodando na máquina poderia pedir abas do Google com a sua sessão. Para testar com `python3 -m http.server 8000 --directory public`, acrescente à mão, só na sua cópia local, em `content_scripts.matches`:
+
+```json
+"http://localhost/*", "http://127.0.0.1/*"
+```
+
+Recarregue a extensão em `chrome://extensions` (ou `about:debugging`). Não commite essa mudança e não regenere o `public/askwheel-paa.zip` com ela.
