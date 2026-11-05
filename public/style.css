@@ -81,6 +81,7 @@ main { max-width: 1100px; margin: 0 auto; padding: 24px 16px 48px; }
 .status .bar i { display: block; height: 100%; width: 0; background: var(--accent); transition: width .15s; }
 .paa-help { padding: 12px 16px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; font-size: 14px; }
 .paa-help p, .paa-help ol { margin: 0 0 6px; }
+.paa-help summary { cursor: pointer; color: var(--muted); }
 .bm { display: inline-block; padding: 3px 10px; border-radius: 6px; background: var(--accent); color: var(--accent-ink); text-decoration: none; font-weight: 600; cursor: grab; }
 
 .res-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
@@ -89,6 +90,7 @@ main { max-width: 1100px; margin: 0 auto; padding: 24px 16px 48px; }
 .panel { margin-top: 28px; padding-top: 20px; border-top: 1px solid var(--line); }
 .panel .res-head h2 { font-size: 19px; }
 .panel > .paa-help, .panel > .map { margin-top: 16px; }
+#paa-prog { margin: 0 0 6px; }
 
 /* mapa do People Also Ask (mesmo visual da skill paa-mapa) */
 .map { overflow: auto; border: 1px solid var(--line); border-radius: 12px; background: var(--surface) radial-gradient(var(--map-dot) 1px, transparent 1px) 0 0 / 22px 22px; }

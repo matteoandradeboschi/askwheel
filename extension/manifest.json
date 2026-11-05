@@ -1,0 +1,17 @@
+{
+  "manifest_version": 3,
+  "name": "AskWheel PAA",
+  "version": "0.1.0",
+  "description": "Traz o People Also Ask do Google para o AskWheel automaticamente, a cada busca.",
+  "permissions": ["scripting"],
+  "host_permissions": ["https://www.google.com/*"],
+  "background": { "service_worker": "background.js", "scripts": ["background.js"] },
+  "content_scripts": [{
+    "matches": ["https://askwheel.pages.dev/*", "https://*.askwheel.pages.dev/*", "http://localhost/*", "http://127.0.0.1/*"],
+    "js": ["site.js"],
+    "run_at": "document_start"
+  }],
+  "browser_specific_settings": {
+    "gecko": { "id": "askwheel-paa@askwheel", "strict_min_version": "121.0", "data_collection_permissions": { "required": ["none"] } }
+  }
+}

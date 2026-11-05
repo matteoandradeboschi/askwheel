@@ -12,6 +12,7 @@
   <a class="brand" href="./">Ask<span>Wheel</span></a>
   <nav class="tabs" role="tablist">
     <button role="tab" data-tab="search" aria-selected="true">Buscar</button>
+    <button role="tab" data-tab="ext">Extensão PAA</button>
     <button role="tab" data-tab="skill">Skill p/ Claude Code</button>
     <button role="tab" data-tab="about">Como funciona</button>
   </nav>
@@ -61,12 +62,20 @@
           <div class="actions"><button id="paa-csv" class="ghost" hidden>Baixar CSV</button></div>
         </div>
         <div id="paa-help" class="paa-help">
-          <p>O Google só mostra o People Also Ask na página de resultados dele, então essa parte é coletada lá, por um favorito (bookmarklet). No computador:</p>
-          <ol>
-            <li>Arraste este botão para a barra de favoritos (só na primeira vez): <a id="paa-bm" class="bm" href="#">AskWheel PAA</a></li>
-            <li><a id="paa-open" target="_blank" rel="noopener" href="#"></a> e, lá, clique no favorito <b>AskWheel PAA</b>.</li>
-            <li>Em uns 20 segundos você volta para cá com tudo: as rodas e o mapa de perguntas.</li>
-          </ol>
+          <div id="paa-prog" class="status" hidden><div class="bar"><i></i></div><span></span></div>
+          <p id="paa-msg" hidden></p>
+          <div id="paa-install">
+            <p>O Google só mostra o People Also Ask na página de resultados dele. Com a extensão <b>AskWheel PAA</b>, ele aparece aqui sozinho a cada busca.</p>
+            <p><a class="bm" href="#" data-goto="ext">Instalar a extensão</a> Firefox, Chrome, Edge, Brave e Opera, no computador.</p>
+          </div>
+          <details id="paa-manual">
+            <summary>Sem extensão: usar um favorito</summary>
+            <ol>
+              <li>Arraste este botão para a barra de favoritos (só na primeira vez): <a id="paa-bm" class="bm" href="#">AskWheel PAA</a></li>
+              <li><a id="paa-open" target="_blank" rel="noopener" href="#"></a> e, lá, clique no favorito <b>AskWheel PAA</b>.</li>
+              <li>Em uns 20 segundos você volta para cá com tudo: as rodas e o mapa de perguntas.</li>
+            </ol>
+          </details>
         </div>
         <div id="paa-map" class="map" hidden></div>
       </section>
@@ -79,6 +88,25 @@
         <div class="list-wrap"><table class="list"><thead><tr><th>Sugestão</th><th>Fonte</th><th>Modificador</th></tr></thead><tbody></tbody></table></div>
       </section>
     </div>
+  </section>
+
+  <section id="tab-ext" class="tab prose" hidden>
+    <h1>Extensão AskWheel PAA</h1>
+    <p>Com a extensão, o People Also Ask do Google aparece sozinho a cada busca: ela abre a busca no Google numa aba em segundo plano, lê as perguntas, traz o mapa para cá e fecha a aba. Não guarda nada e não envia dados para nenhum outro lugar.</p>
+    <p><a class="bm" href="askwheel-paa.zip" download>Baixar a extensão (.zip)</a></p>
+    <h2>Chrome, Edge, Brave, Opera, Vivaldi</h2>
+    <ol>
+      <li>Descompacte o .zip numa pasta que você não vai apagar.</li>
+      <li>Abra <code>chrome://extensions</code> (no Opera, <code>opera://extensions</code>) e ligue o <b>Modo do desenvolvedor</b>.</li>
+      <li>Clique em <b>Carregar sem compactação</b> e escolha a pasta.</li>
+    </ol>
+    <h2>Firefox</h2>
+    <ol>
+      <li>Descompacte o .zip.</li>
+      <li>Abra <code>about:debugging#/runtime/this-firefox</code> e clique em <b>Carregar extensão temporária</b>.</li>
+      <li>Escolha o arquivo <code>manifest.json</code> da pasta. A extensão some quando o Firefox fecha.</li>
+    </ol>
+    <p>Depois, recarregue esta página e busque. Se o Google pedir verificação ou mostrar a tela de cookies, a aba dele fica aberta para você resolver.</p>
   </section>
 
   <section id="tab-skill" class="tab prose" hidden>
@@ -103,7 +131,7 @@
     <ol>
       <li>A palavra-chave é combinada com modificadores no idioma escolhido: perguntas (<i>como, por que, qual…</i>), preposições (<i>para, com, sem…</i>), comparações (<i>vs, ou…</i>), letras a–z e números 0–9.</li>
       <li>Cada combinação é enviada ao autocomplete do Google e do Google Shopping <b>direto do seu navegador</b> (cerca de 140 consultas).</li>
-      <li>O People Also Ask é lido na própria página de resultados do Google pelo favorito <b>AskWheel PAA</b>, que abre as perguntas e as traz como um mapa.</li>
+      <li>O People Also Ask é lido na própria página de resultados do Google pela extensão <b>AskWheel PAA</b> (ou por um favorito), que abre as perguntas numa aba em segundo plano e as traz como um mapa.</li>
       <li>As sugestões são agrupadas por modificador. O que não se encaixa em nenhum vai para <b>Relacionadas</b>.</li>
     </ol>
     <h2>Limitações</h2>
@@ -114,7 +142,7 @@
       <li>Bloqueadores de anúncio podem impedir as consultas.</li>
       <li>Amazon, TikTok e Google Trends não estão aqui: bloqueiam consultas do navegador (CORS). Existem só na skill para Claude Code.</li>
       <li>Instagram exige login.</li>
-      <li>People Also Ask só existe na página de resultados do Google: a coleta roda lá, pelo favorito <b>AskWheel PAA</b>. Precisa de computador (favoritos arrastáveis) e só funciona quando o Google mostra a caixa.</li>
+      <li>People Also Ask só existe na página de resultados do Google: a coleta roda lá, pela extensão ou pelo favorito <b>AskWheel PAA</b>. Precisa de computador e só funciona quando o Google mostra a caixa.</li>
     </ul>
     <h2>Privacidade</h2>
     <p>O site é estático: não tem servidor, cadastro nem analytics. As consultas vão do seu navegador direto para o Google.</p>
