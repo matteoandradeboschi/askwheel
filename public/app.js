@@ -529,10 +529,14 @@ async function search(kw, hl, gl, paa = null) {
   }
 }
 
+// Célula que começa com = + - @ (ou tab/CR) vira fórmula no Excel/Sheets: prefixa ' para ficar texto.
+const csvCell = (c) => `"${String(c).replace(/^[=+\-@\t\r]/, "'$&").replace(/"/g, '""')}"`;
+const csvRows = (rows) => rows.map((r) => r.map(csvCell).join(',')).join('\n');
+
 function toCsv(data) {
   const rows = [['grupo', 'modificador', 'sugestao', 'fonte']];
   for (const k of GROUPS) for (const m of data.groups[k]?.modifiers || []) for (const t of m.items) rows.push([k, m.name ?? '', t, dataSrc(data)]);
-  return rows.map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n');
+  return csvRows(rows);
 }
 
 function paaCsv(tree) {
@@ -541,7 +545,7 @@ function paaCsv(tree) {
     if (depth) rows.push([n.name, parent, depth]);
     (n.children || []).forEach((c) => walk(c, depth ? n.name : '', depth + 1));
   })(tree, '', 0);
-  return rows.map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n');
+  return csvRows(rows);
 }
 
 function download(name, text, type) {
