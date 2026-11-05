@@ -604,8 +604,10 @@ const setSelect = (id, v) => { if ([...$(`#${id}`).options].some((o) => o.value 
 function init() {
   const params = new URLSearchParams(location.search);
   const d = defaults();
-  $('#hl').value = params.get('hl') || d.hl;
-  $('#gl').value = params.get('gl') || d.gl;
+  $('#hl').value = d.hl;
+  $('#gl').value = d.gl;
+  setSelect('hl', params.get('hl'));
+  setSelect('gl', params.get('gl'));
   $('#install-cmd').textContent = installCommand();
   setupBookmarklet();
 
