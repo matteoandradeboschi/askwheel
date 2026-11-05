@@ -52,10 +52,11 @@ function jsonp(src, q, hl, gl, timeout = 8000) {
   return new Promise((resolve) => {
     const cb = '__aw' + Math.random().toString(36).slice(2);
     const s = document.createElement('script');
-    const done = (list) => { clearTimeout(t); delete window[cb]; s.remove(); resolve(list); };
-    const t = setTimeout(() => done(null), timeout);
-    window[cb] = (data) => { const l = SOURCES[src].parse(data); done(Array.isArray(l) ? l : []); };
-    s.onerror = () => done(null);
+    const done = (list) => { clearTimeout(t); s.remove(); resolve(list); };
+    // Resposta que chega depois do timeout: cai num no-op (sem ReferenceError) e só então limpa.
+    const t = setTimeout(() => { window[cb] = () => delete window[cb]; done(null); }, timeout);
+    window[cb] = (data) => { delete window[cb]; const l = SOURCES[src].parse(data); done(Array.isArray(l) ? l : []); };
+    s.onerror = () => { delete window[cb]; done(null); };
     s.src = SOURCES[src].url(q, hl, gl, cb);
     document.head.append(s);
   });
