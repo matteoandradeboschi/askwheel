@@ -1,8 +1,9 @@
 /* AskWheel PAA: bookmarklet que roda numa busca do Google, abre as perguntas do "People Also Ask"
    (cada clique revela novas) e leva o resultado para o AskWheel via #paa= na URL.
    O site troca o valor de SITE pelo próprio endereço e monta o link javascript:. Sem comentários de linha:
-   o código vira uma URL. */
-(async () => {
+   o código vira uma URL. O void é obrigatório: se o javascript: devolve um valor (aqui, a Promise),
+   o Firefox troca a página do Google por esse valor e o script para no meio. */
+void (async () => {
   const SITE = '__SITE__';
   const MAX_CLICKS = 20;
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));

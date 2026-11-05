@@ -32,7 +32,9 @@ const LABELS = {
   alphabeticals: 'Alfabética', numbers: 'Números', related: 'Relacionadas', extras: 'Extras (Claude)',
 };
 const WHEEL_LEAVES = 6;
-const PALETTE = ['#2f5fd0', '#0f9d8a', '#d9822b', '#c2417a', '#7a52c7', '#3d8f3d', '#c74b3b', '#1f8fbf', '#a6782c', '#5a6b7d'];
+const OVERVIEW_LEAVES = 15;
+// Tons pastel: o anel interno usa a cor, o externo uma versão clara dela (texto sempre escuro).
+const PALETTE = ['#f6a58a', '#f9d76b', '#8fbdf7', '#c3b2f9', '#8ddba5', '#f5a3cf', '#fbb877', '#8fdfe8', '#cde58d', '#c3ccd8'];
 
 const $ = (s) => document.querySelector(s);
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -41,7 +43,7 @@ const hasToken = (text, tok) => ` ${norm(text)} `.includes(` ${norm(tok)} `);
 const hasKeyword = (text, kw) => norm(kw).split(' ').every((t) => norm(text).includes(t));
 
 // panels: uma roda por fonte ({ data, group, view, el }); paa: árvore do People Also Ask.
-let state = { keyword: '', hl: '', gl: '', panels: [], paa: null };
+let state = { keyword: '', hl: '', gl: '', panels: [], paa: null, listGroup: null };
 
 // ---------- coleta ----------
 
@@ -121,16 +123,56 @@ async function collect(kw, hl, gl, src, onProgress) {
 
 // ---------- roda (sunburst com zoom) ----------
 
-function drawWheel(el, data, group) {
-  el.replaceChildren();
+// Roda de um grupo: anel interno = modificador, externo = primeiras sugestões (todas nos Cards).
+function drawGroupWheel(el, data, group) {
   const kw = data.keyword;
   const mods = group.modifiers.filter((m) => m.items.length);
   if (!mods.length) { el.innerHTML = '<p class="empty">Nenhuma sugestão neste grupo.</p>'; return; }
-  // Como no ATP: a roda mostra só as primeiras sugestões de cada modificador; a tabela mostra todas.
   const tree = { name: kw, children: mods.map((m) => ({ name: m.name ?? kw, children: m.items.slice(0, WHEEL_LEAVES).map((t) => ({ name: t, value: 1 })) })) };
+  drawWheel(el, tree, {
+    open: (d) => openUrl(data, d.data.name),
+    tip: (d) => (d.children
+      ? tipHtml(d.data.name, [['Sugestões', group.modifiers.find((m) => (m.name ?? kw) === d.data.name)?.items.length]], 'Clique para dar zoom')
+      : tipHtml(d.data.name, [['Fonte', dataLabel(data)], ['Modificador', d.parent.data.name]], `Clique para abrir ${srcMeta(data.src).prep || 'no'} ${srcLabel(data.src)}`)),
+    hint: `A roda mostra até ${WHEEL_LEAVES} sugestões por modificador (todas em Cards e na lista abaixo). Clique num modificador para dar zoom, no centro para voltar.`,
+  });
+}
 
+// Roda geral: anel interno = fonte, externo = principais sugestões dela (uma de cada modificador, em rodízio).
+function topSuggestions(data, n) {
+  const lists = GROUPS.flatMap((k) => (data.groups[k]?.modifiers || []).map((m) => m.items));
+  const out = new Set();
+  for (let i = 0; out.size < n && lists.some((l) => l[i]); i++) for (const l of lists) if (l[i] && out.size < n) out.add(l[i]);
+  return [...out];
+}
+
+function renderOverview() {
+  const el = $('#overview .wheel');
+  $('#overview').hidden = state.panels.length < 2;
+  if (state.panels.length < 2) return;
+  const tree = { name: state.keyword, children: state.panels.map(({ data }) => ({ name: dataLabel(data), data, children: topSuggestions(data, OVERVIEW_LEAVES).map((t) => ({ name: t, value: 1 })) })) };
+  const total = (data) => GROUPS.reduce((n, k) => n + (data.groups[k]?.count || 0), 0);
+  drawWheel(el, tree, {
+    open: (d) => openUrl(d.parent.data.data, d.data.name),
+    tip: (d) => (d.children
+      ? tipHtml(d.data.name, [['Sugestões', total(d.data.data)]], 'Clique para dar zoom')
+      : tipHtml(d.data.name, [['Fonte', d.parent.data.name]], 'Clique para abrir a busca')),
+    hint: 'Principais sugestões de cada fonte. Clique numa fonte para dar zoom; o detalhe por modificador está abaixo.',
+  });
+}
+
+// Tooltip escuro (como no ATP): título, linhas rótulo/valor e uma dica de clique.
+const tipHtml = (title, rows, foot) => `<b>${esc(title)}</b>${
+  rows.map(([k, v]) => `<div class="row"><span>${esc(k)}</span>${esc(v ?? '')}</div>`).join('')}<small>${esc(foot)}</small>`;
+const tipEl = () => $('#tip') || document.body.appendChild(Object.assign(document.createElement('div'), { id: 'tip', role: 'tooltip', hidden: true }));
+
+// Sunburst com zoom. tree: { name, children: [{ name, children: [{ name, value }] }] }.
+function drawWheel(el, tree, { open, tip, hint }) {
+  el.replaceChildren();
+  const kw = tree.name;
   const size = 760, r = size / 6;
-  const color = d3.scaleOrdinal(mods.map((m) => m.name), PALETTE.concat(PALETTE, PALETTE));
+  const color = d3.scaleOrdinal(tree.children.map((c) => c.name), PALETTE.concat(PALETTE, PALETTE));
+  const fill = (d) => { const c = color(d.depth === 1 ? d.data.name : d.parent.data.name); return d.children ? c : d3.interpolateRgb(c, '#fff')(0.6); };
   const root = d3.partition().size([2 * Math.PI, 3])(d3.hierarchy(tree).sum((d) => d.value || 0));
   root.each((d) => (d.current = d));
 
@@ -149,21 +191,29 @@ function drawWheel(el, data, group) {
   const svg = d3.create('svg').attr('viewBox', [-size / 2, -size / 2, size, size]);
   const g = svg.append('g');
   const path = g.append('g').selectAll('path').data(root.descendants().slice(1)).join('path')
-    .attr('fill', (d) => color(d.depth === 1 ? d.data.name : d.parent.data.name))
-    .attr('fill-opacity', (d) => (arcVisible(d.current) ? (d.children ? 0.9 : 0.45) : 0))
+    .attr('fill', fill)
+    .attr('fill-opacity', (d) => +arcVisible(d.current))
     .attr('pointer-events', (d) => (arcVisible(d.current) ? 'auto' : 'none'))
-    .attr('stroke', 'var(--bg)')
+    .attr('stroke', '#fff')
     .attr('d', (d) => arc(d.current))
     .style('cursor', 'pointer')
-    .on('click', (e, d) => (d.children ? zoom(d) : window.open(openUrl(data, d.data.name), '_blank', 'noopener')));
-  path.append('title').text((d) => (d.children ? `${d.data.name}: ${d.children.length} sugestões` : d.data.name));
+    .on('click', (e, d) => (d.children ? zoom(d) : window.open(open(d), '_blank', 'noopener')))
+    .on('mousemove', (e, d) => {
+      const t = tipEl();
+      t.innerHTML = tip(d);
+      t.hidden = false;
+      // não deixa o tooltip sair da tela pela direita/embaixo
+      t.style.left = `${Math.min(e.clientX + 14, innerWidth - t.offsetWidth - 8)}px`;
+      t.style.top = `${Math.min(e.clientY + 14, innerHeight - t.offsetHeight - 8)}px`;
+    })
+    .on('mouseleave', () => (tipEl().hidden = true));
 
   const label = g.append('g').attr('text-anchor', 'middle').selectAll('text')
     .data(root.descendants().slice(1)).join('text').attr('dy', '0.35em')
     .attr('fill-opacity', (d) => +labelVisible(d.current))
     .attr('transform', (d) => labelTransform(d.current))
     .style('font-weight', (d) => (d.children ? 700 : 400))
-    .text((d) => short(d.data.name, d.children ? 14 : 22));
+    .text((d) => short(d.data.name, d.children ? 18 : 22));
 
   const center = g.append('circle').attr('r', r).attr('class', 'center').on('click', () => zoom(focus.parent || root));
   const centerLabel = g.append('text').attr('class', 'center-label').attr('text-anchor', 'middle').attr('dy', '0.35em').text(short(kw, 18));
@@ -182,7 +232,7 @@ function drawWheel(el, data, group) {
     path.transition(t)
       .tween('data', (d) => { const i = d3.interpolate(d.current, d.target); return (k) => (d.current = i(k)); })
       .filter(function (d) { return +this.getAttribute('fill-opacity') || arcVisible(d.target); })
-      .attr('fill-opacity', (d) => (arcVisible(d.target) ? (d.children ? 0.9 : 0.45) : 0))
+      .attr('fill-opacity', (d) => +arcVisible(d.target))
       .attr('pointer-events', (d) => (arcVisible(d.target) ? 'auto' : 'none'))
       .attrTween('d', (d) => () => arc(d.current));
     label.filter(function (d) { return +this.getAttribute('fill-opacity') || labelVisible(d.target); })
@@ -192,10 +242,10 @@ function drawWheel(el, data, group) {
   }
 
   el.append(svg.node());
-  const hint = document.createElement('p');
-  hint.className = 'hint muted';
-  hint.textContent = `A roda mostra até ${WHEEL_LEAVES} sugestões por modificador (todas na Tabela). Clique num modificador para dar zoom, no centro para voltar, numa sugestão para abrir ${srcMeta(data.src).prep || 'no'} ${srcLabel(data.src)}.`;
-  el.append(hint);
+  const note = document.createElement('p');
+  note.className = 'hint muted';
+  note.textContent = hint;
+  el.append(note);
   center.raise();
   centerLabel.raise();
 }
@@ -276,10 +326,29 @@ const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&l
 function drawTable(el, data, group) {
   const mods = group.modifiers.filter((m) => m.items.length);
   el.innerHTML = mods.length
-    ? mods.map((m) => `<div class="block"><h3>${esc(m.name ?? 'relacionadas')} <small>${m.items.length}</small></h3><ol>${
-        m.items.map((t) => `<li><a href="${openUrl(data, t)}" target="_blank" rel="noopener">${esc(t)}</a></li>`).join('')
-      }</ol></div>`).join('')
+    ? mods.map((m) => `<div class="block"><h3>${esc(m.name ?? 'relacionadas')} <small>${m.items.length}</small></h3><ul class="rows">${
+        m.items.map((t) => `<li>${plusBtn(t)}${linkTo(data, t)}</li>`).join('')
+      }</ul></div>`).join('')
     : '<p class="empty">Nenhuma sugestão neste grupo.</p>';
+}
+
+const plusBtn = (t) => `<button class="plus" data-text="${esc(t)}" title="Copiar" aria-label="Copiar “${esc(t)}”">+</button>`;
+const linkTo = (data, t) => `<a href="${openUrl(data, t)}" target="_blank" rel="noopener">${esc(t)}</a>`;
+
+// Lista única com todas as fontes, etiqueta "grupo / modificador" e filtros (como a lista de palavras-chave do ATP).
+function renderList() {
+  $('#list').hidden = !state.panels.length;
+  const f = norm($('#list-q').value);
+  const g = state.listGroup;
+  const rows = state.panels.flatMap(({ data }) => GROUPS.flatMap((k) =>
+    (data.groups[k]?.modifiers || []).flatMap((m) => m.items.map((t) => ({ t, k, m: m.name, data })))));
+  const shown = rows.filter((r) => (!g || r.k === g) && (!f || norm(r.t).includes(f)));
+  $('#list-groups').innerHTML = [null, ...GROUPS].map((k) =>
+    `<button data-lgroup="${k ?? ''}" aria-pressed="${k === g}">${k ? LABELS[k] : 'Todos'}</button>`).join('');
+  $('#list-count').textContent = `${shown.length} de ${rows.length}`;
+  $('#list tbody').innerHTML = shown.map((r) => `<tr><td><span class="kw">${plusBtn(r.t)}${linkTo(r.data, r.t)}</span></td><td>${
+    esc(dataLabel(r.data))}</td><td><span class="tag ${r.k}">${esc(LABELS[r.k].toLowerCase())}${r.m ? ` / ${esc(r.m)}` : ''}</span></td></tr>`).join('')
+    || '<tr><td colspan="3" class="empty">Nenhuma sugestão.</td></tr>';
 }
 
 function drawExtras(el, extras) {
@@ -297,12 +366,14 @@ function addPanel(data) {
   el.className = 'panel';
   el.innerHTML = `<div class="res-head"><h2></h2><div class="actions">
       <div class="seg" role="group" aria-label="Visualização">
-        <button data-view="wheel" aria-pressed="true">Roda</button><button data-view="table" aria-pressed="false">Tabela</button>
+        <button data-view="wheel" aria-pressed="true">Roda</button><button data-view="table" aria-pressed="false">Cards</button>
       </div>
       <button class="ghost csv">Baixar CSV</button></div></div>
-    <div class="chips"></div><div class="wheel"></div><div class="table" hidden></div><div class="extras" hidden></div>`;
+    <div class="mtabs" role="group" aria-label="Grupo"></div><div class="wheel"></div><div class="table" hidden></div><div class="extras" hidden></div>`;
   $('#panels').append(el);
-  const p = { data, el, view: 'wheel', group: GROUPS.find((k) => data.groups[k]?.count) || 'questions' };
+  // Abre no primeiro grupo com roda legível (≥3 modificadores com sugestões); senão, no primeiro com alguma.
+  const filled = (k) => data.groups[k]?.modifiers.filter((m) => m.items.length).length || 0;
+  const p = { data, el, view: 'wheel', group: GROUPS.find((k) => filled(k) >= 3) || GROUPS.find((k) => data.groups[k]?.count) || 'questions' };
   el.addEventListener('click', (e) => {
     const b = e.target.closest('button');
     if (!b) return;
@@ -316,6 +387,8 @@ function addPanel(data) {
   });
   state.panels.push(p);
   renderPanel(p);
+  renderOverview();
+  renderList();
 }
 
 function renderPanel(p) {
@@ -324,7 +397,7 @@ function renderPanel(p) {
   const total = GROUPS.reduce((n, k) => n + (data.groups[k]?.count || 0), 0);
   q('h2').innerHTML = `${esc(dataLabel(data))} <small>${total} sugestões</small>`;
   const keys = GROUPS.filter((k) => data.groups[k]).concat(data.extras ? ['extras'] : []);
-  q('.chips').innerHTML = keys.map((k) => `<button data-group="${k}" aria-pressed="${k === p.group}">${
+  q('.mtabs').innerHTML = keys.map((k) => `<button data-group="${k}" aria-pressed="${k === p.group}">${
     k === 'extras' ? '' : `<b>${data.groups[k].count}</b>`}${LABELS[k]}</button>`).join('');
 
   const isExtras = p.group === 'extras';
@@ -334,7 +407,7 @@ function renderPanel(p) {
   q('.seg').hidden = isExtras;
   if (isExtras) return drawExtras(q('.extras'), data.extras);
   const group = data.groups[p.group];
-  if (p.view === 'wheel') drawWheel(q('.wheel'), data, group);
+  if (p.view === 'wheel') drawGroupWheel(q('.wheel'), data, group);
   else drawTable(q('.table'), data, group);
 }
 
@@ -350,8 +423,10 @@ function renderPaa() {
 }
 
 function startResults(kw, hl, gl) {
-  Object.assign(state, { keyword: kw, hl, gl, panels: [] });
+  Object.assign(state, { keyword: kw, hl, gl, panels: [], listGroup: null });
   $('#panels').replaceChildren();
+  $('#overview').hidden = $('#list').hidden = true;
+  $('#list-q').value = '';
   $('#res-title').textContent = `Resultados para “${kw}”`;
   $('#results').hidden = $('#paa').hidden = $('#share').hidden = false;
 }
@@ -411,10 +486,10 @@ function download(name, text, type) {
   URL.revokeObjectURL(a.href);
 }
 
-async function copy(text, btn) {
+async function copy(text, btn, done = 'Copiado') {
   try { await navigator.clipboard.writeText(text); } catch { return; }
   const old = btn.textContent;
-  btn.textContent = 'Copiado';
+  btn.textContent = done;
   setTimeout(() => (btn.textContent = old), 1200);
 }
 
@@ -484,6 +559,12 @@ function init() {
     const { keyword: q, hl, gl } = state;
     copy(`${location.origin}${location.pathname}?${new URLSearchParams({ q, hl, gl })}`, e.target);
   });
+  document.addEventListener('click', (e) => { const b = e.target.closest('button.plus'); if (b) copy(b.dataset.text, b, '✓'); });
+  $('#list-groups').addEventListener('click', (e) => {
+    const b = e.target.closest('button');
+    if (b) { state.listGroup = b.dataset.lgroup || null; renderList(); }
+  });
+  $('#list-q').addEventListener('input', renderList);
   document.querySelectorAll('.copy').forEach((b) => b.addEventListener('click', () => copy($(`#${b.dataset.copy}`).textContent, b)));
 
   const paa = readPaaHash();

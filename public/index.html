@@ -50,6 +50,10 @@
         <h2 id="res-title"></h2>
         <div class="actions"><button id="share" class="ghost">Copiar link</button></div>
       </div>
+      <section id="overview" class="panel" hidden>
+        <div class="res-head"><h2>Visão geral</h2></div>
+        <div class="wheel"></div>
+      </section>
       <div id="panels"></div>
       <section id="paa" class="panel">
         <div class="res-head">
@@ -65,6 +69,14 @@
           </ol>
         </div>
         <div id="paa-map" class="map" hidden></div>
+      </section>
+      <section id="list" class="panel" hidden>
+        <div class="res-head">
+          <h2>Todas as sugestões <small id="list-count"></small></h2>
+          <div class="actions"><input id="list-q" type="search" placeholder="Filtrar" aria-label="Filtrar sugestões"></div>
+        </div>
+        <div id="list-groups" class="chips"></div>
+        <div class="list-wrap"><table class="list"><thead><tr><th>Sugestão</th><th>Fonte</th><th>Modificador</th></tr></thead><tbody></tbody></table></div>
       </section>
     </div>
   </section>

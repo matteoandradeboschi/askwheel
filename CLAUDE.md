@@ -6,7 +6,7 @@ Free, static search-listening site (AnswerThePublic-style): one search box: keyw
 
 - `public/` is the deploy root (upload as-is to Cloudflare Pages).
 - `public/app.js`: collection (`buildPlan`, `jsonp`, `assemble`), panels (wheel, table, extras), PAA map (`drawMap`), UI. Also renders preloaded data from `window.__WHEEL_DATA__` (used by the skill's standalone HTML).
-- `public/paa.js`: PAA bookmarklet source. `app.js` fetches it, replaces `'__SITE__'` with the site URL and sets it as the `javascript:` link. No `//` comments (it becomes a URL). Depends on Google's DOM (`.related-question-pair[data-q]`, `[role=button][aria-expanded]`): breaks if Google changes it.
+- `public/paa.js`: PAA bookmarklet source. `app.js` fetches it, replaces `'__SITE__'` with the site URL and sets it as the `javascript:` link. No `//` comments (it becomes a URL). Keep the `void` before the IIFE: Firefox replaces the page with a bookmarklet's return value. Depends on Google's DOM (`.related-question-pair[data-q]`, `[role=button][aria-expanded]`): breaks if Google changes it.
 - `public/modifiers.json`: modifiers per language. Single source for site and skill.
 - `public/skill/`: optional Claude Code skill, served by the site and installed with the command in the **Skill p/ Claude Code** tab.
   - `collect.py`: same collection logic as `app.js` in Python (stdlib only). Also has skill-only sources `amazon`, `tiktok`, `trends` (`LOCAL_SOURCES`); `app.js` knows them only in `SKILL_SOURCES` (label/link for preloaded data).
