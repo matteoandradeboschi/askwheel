@@ -510,6 +510,8 @@ window.addEventListener('message', (e) => {
 // Consulta Google e Google Shopping ao mesmo tempo; o PAA vem da extensão ou do bookmarklet (paa mantém o que já foi coletado).
 async function search(kw, hl, gl, paa = null) {
   $('#go').disabled = true;
+  // aria-busy: o leitor de tela anuncia só o resultado final, não cada n/140.
+  $('#status').setAttribute('aria-busy', 'true');
   startResults(kw, hl, gl);
   Object.assign(state, { paa, paaWait: null, paaError: null });
   if (!paa && hasExt()) requestPaa(kw, hl, gl);
@@ -531,6 +533,7 @@ async function search(kw, hl, gl, paa = null) {
     setStatus('Algo deu errado na busca. Recarregue a página e tente de novo.', 0);
   } finally {
     $('#go').disabled = false;
+    $('#status').setAttribute('aria-busy', 'false');
   }
 }
 
@@ -575,8 +578,12 @@ function selectTab(name) {
   if (name === 'search' && state.paa) drawMap($('#paa-map'), state.paa);
 }
 
-// Só a origem: o pathname vem da URL e iria cru para o comando shell e para o bookmarklet.
-const siteUrl = () => (/^https?:/.test(location.protocol) ? location.origin + '/' : 'https://SEU-SITE.pages.dev/');
+// O pathname vem da URL e vai para o comando shell e para o bookmarklet: só passa se for um caminho simples.
+const siteUrl = () => {
+  if (!/^https?:/.test(location.protocol)) return 'https://SEU-SITE.pages.dev/';
+  const dir = location.pathname.replace(/[^/]*$/, '');
+  return location.origin + (/^[\w/.~-]*$/.test(dir) ? dir : '/');
+};
 
 function installCommand() {
   const origin = siteUrl();
