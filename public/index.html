@@ -9,46 +9,45 @@
 </head>
 <body>
 <header class="top">
-  <a class="brand" href="./">Ask<span>Wheel</span></a>
-  <nav class="tabs" role="tablist">
-    <button role="tab" id="tabbtn-search" aria-controls="tab-search" data-tab="search" aria-selected="true">Buscar</button>
-    <button role="tab" id="tabbtn-ext" aria-controls="tab-ext" data-tab="ext" aria-selected="false">Extensão PAA</button>
-    <button role="tab" id="tabbtn-skill" aria-controls="tab-skill" data-tab="skill" aria-selected="false">Skill p/ Claude Code</button>
-    <button role="tab" id="tabbtn-about" aria-controls="tab-about" data-tab="about" aria-selected="false">Como funciona</button>
+  <a class="brand" href="./" data-goto="search">Ask<span>Wheel</span></a>
+  <form id="form" class="search">
+    <input id="q" name="q" type="search" aria-label="Palavra-chave" placeholder="ex.: caffè, juros compostos, bicicleta elétrica" autocomplete="off" required>
+    <select id="hl" name="hl" aria-label="Idioma">
+      <option value="pt">Português</option>
+      <option value="it">Italiano</option>
+      <option value="en">English</option>
+      <option value="es">Español</option>
+    </select>
+    <select id="gl" name="gl" aria-label="País">
+      <option value="it">Itália</option>
+      <option value="br">Brasil</option>
+      <option value="pt">Portugal</option>
+      <option value="us">EUA</option>
+      <option value="gb">Reino Unido</option>
+      <option value="es">Espanha</option>
+      <option value="fr">França</option>
+      <option value="de">Alemanha</option>
+    </select>
+    <button id="go" type="submit">Buscar</button>
+  </form>
+  <nav class="tabs" aria-label="Páginas">
+    <button data-tab="ext" class="desk">Extensão PAA</button>
+    <button data-tab="skill" class="desk">Skill p/ Claude Code</button>
+    <button data-tab="about">Como funciona</button>
   </nav>
 </header>
 
 <main>
-  <section id="tab-search" class="tab" role="tabpanel" aria-labelledby="tabbtn-search">
+  <section id="tab-search" class="tab">
     <div class="hero">
       <h1>O que as pessoas buscam na internet?</h1>
       <p class="muted">Digite uma palavra-chave e veja, numa busca só, o autocomplete do Google e do Google Shopping (perguntas, preposições, comparações, a–z, 0–9, relacionadas) e o mapa do People Also Ask. Grátis, sem cadastro.</p>
-      <form id="form" class="search">
-        <input id="q" name="q" type="search" aria-label="Palavra-chave" placeholder="ex.: caffè, juros compostos, bicicleta elétrica" autocomplete="off" required>
-        <select id="hl" name="hl" aria-label="Idioma">
-          <option value="pt">Português</option>
-          <option value="it">Italiano</option>
-          <option value="en">English</option>
-          <option value="es">Español</option>
-        </select>
-        <select id="gl" name="gl" aria-label="País">
-          <option value="it">Itália</option>
-          <option value="br">Brasil</option>
-          <option value="pt">Portugal</option>
-          <option value="us">EUA</option>
-          <option value="gb">Reino Unido</option>
-          <option value="es">Espanha</option>
-          <option value="fr">França</option>
-          <option value="de">Alemanha</option>
-        </select>
-        <button id="go" type="submit">Buscar</button>
-      </form>
-      <div id="status" class="status" aria-live="polite" hidden><div class="bar"><i></i></div><span></span></div>
     </div>
+    <div id="status" class="status" aria-live="polite" hidden><div class="bar"><i></i></div><span></span></div>
 
     <div id="results" hidden>
       <div class="res-head">
-        <h2 id="res-title"></h2>
+        <h1 id="res-title"></h1>
         <div class="actions"><button id="share" class="ghost">Copiar link</button></div>
       </div>
       <section id="overview" class="panel" hidden>
@@ -57,25 +56,17 @@
       </section>
       <div id="panels"></div>
       <section id="paa" class="panel">
-        <div class="res-head">
+        <div id="paa-head" class="res-head">
           <h2>People Also Ask <small id="paa-count"></small></h2>
           <div class="actions"><button id="paa-csv" class="ghost" hidden>Baixar CSV</button></div>
         </div>
         <div id="paa-help" class="paa-help">
           <div id="paa-prog" class="status" hidden><div class="bar"><i></i></div><span></span></div>
           <p id="paa-msg" aria-live="polite" hidden></p>
-          <div id="paa-install">
-            <p>O Google só mostra o People Also Ask na página de resultados dele. Com a extensão <b>AskWheel PAA</b>, ele aparece aqui sozinho a cada busca.</p>
-            <p><a class="bm" href="#" data-goto="ext">Instalar a extensão</a> Firefox, Chrome, Edge, Brave e Opera, no computador.</p>
+          <div id="paa-install" class="paa-line">
+            <p><b>Mapa de perguntas</b> <span class="muted">(People Also Ask): instale a extensão no computador.</span></p>
+            <a class="ghost" href="#" data-goto="ext">Instalar extensão</a>
           </div>
-          <details id="paa-manual">
-            <summary>Sem extensão: usar um favorito</summary>
-            <ol>
-              <li>Arraste este botão para a barra de favoritos (só na primeira vez): <a id="paa-bm" class="bm" href="#">AskWheel PAA</a></li>
-              <li><a id="paa-open" target="_blank" rel="noopener" href="#"></a> e, lá, clique no favorito <b>AskWheel PAA</b>.</li>
-              <li>Em uns 20 segundos você volta para cá com tudo: as rodas e o mapa de perguntas.</li>
-            </ol>
-          </details>
         </div>
         <div id="paa-map" class="map" hidden></div>
       </section>
@@ -90,7 +81,7 @@
     </div>
   </section>
 
-  <section id="tab-ext" class="tab prose" role="tabpanel" aria-labelledby="tabbtn-ext" hidden>
+  <section id="tab-ext" class="tab prose" hidden>
     <h1>Extensão AskWheel PAA</h1>
     <p>Com a extensão, o People Also Ask do Google aparece sozinho a cada busca: ela abre a busca no Google numa aba em segundo plano, lê as perguntas, traz o mapa para cá e fecha a aba. Não guarda nada e não envia dados para nenhum outro lugar.</p>
     <p><a class="bm" href="askwheel-paa.zip" download>Baixar a extensão (.zip)</a></p>
@@ -107,9 +98,15 @@
       <li>Escolha o arquivo <code>manifest.json</code> da pasta. A extensão some quando o Firefox fecha.</li>
     </ol>
     <p>Depois, recarregue esta página e busque. Se o Google pedir verificação ou mostrar a tela de cookies, a aba dele fica aberta para você resolver.</p>
+    <h2>Sem extensão: usar um favorito</h2>
+    <ol>
+      <li>Arraste este botão para a barra de favoritos (só na primeira vez): <a id="paa-bm" class="bm" href="#">AskWheel PAA</a> <span id="bm-msg" class="muted" aria-live="polite"></span></li>
+      <li>Busque a palavra no Google e, na página de resultados, clique no favorito.</li>
+      <li>Em uns 20 segundos você volta para cá com tudo: as rodas e o mapa de perguntas.</li>
+    </ol>
   </section>
 
-  <section id="tab-skill" class="tab prose" role="tabpanel" aria-labelledby="tabbtn-skill" hidden>
+  <section id="tab-skill" class="tab prose" hidden>
     <h1>Skill para Claude Code</h1>
     <p>Opcional. O site cobre a coleta e a visualização. A skill faz o mesmo dentro do <a href="https://claude.com/claude-code" target="_blank" rel="noopener">Claude Code</a> e acrescenta o que o site não faz:</p>
     <ul>
@@ -126,7 +123,7 @@
     <p class="muted">Requisitos: Python 3 (só a biblioteca padrão, nada para instalar). Para atualizar, rode o comando de instalação de novo. Arquivos: <a href="skill/SKILL.md" target="_blank">SKILL.md</a>, <a href="skill/collect.py" target="_blank">collect.py</a>, <a href="skill/render.py" target="_blank">render.py</a>.</p>
   </section>
 
-  <section id="tab-about" class="tab prose" role="tabpanel" aria-labelledby="tabbtn-about" hidden>
+  <section id="tab-about" class="tab prose" hidden>
     <h1>Como funciona</h1>
     <ol>
       <li>A palavra-chave é combinada com modificadores no idioma escolhido: perguntas (<i>como, por que, qual…</i>), preposições (<i>para, com, sem…</i>), comparações (<i>vs, ou…</i>), letras a–z e números 0–9.</li>
