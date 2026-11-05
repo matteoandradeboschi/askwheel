@@ -126,10 +126,11 @@ def fetch(q, hl, gl, src):
     try:
         with urllib.request.urlopen(req, timeout=8) as r:
             body = r.read().decode("utf-8")
-        time.sleep(0.12)
         return decode(body)
     except Exception:
         return None
+    finally:
+        time.sleep(0.12)  # também após falha: sem pausa, um bloqueio vira rajada (igual ao sleep do app.js)
 
 
 def assemble(kw, plan, results, hl, gl, src):
