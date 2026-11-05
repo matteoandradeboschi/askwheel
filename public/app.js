@@ -212,8 +212,20 @@ function drawWheel(el, tree, { open, tip, hint }) {
   // corta o texto pela largura medida da faixa (não por nº de letras), para não vazar da fatia
   const fit = (node, d, p) => {
     const s = d.data.name, max = rad(p.y1) - rad(p.y0) - 12;
-    node.textContent = s;
-    if (!node.getComputedTextLength()) return (node.textContent = short(s, 22)); // roda escondida: sem medida
+    const el = d3.select(node);
+    el.text(s);
+    if (!node.getComputedTextLength()) return el.text(short(s, 22)); // roda escondida: sem medida
+    if (node.getComputedTextLength() <= max) return;
+    // faixa do modificador: quebra em duas linhas (há espaço na tangente) antes de cortar
+    const w = s.split(' ');
+    if (d.depth === 1 && w.length > 1) {
+      const k = Math.ceil(w.length / 2);
+      el.text(null);
+      el.append('tspan').attr('x', 0).attr('dy', '-0.5em').text(w.slice(0, k).join(' '));
+      el.append('tspan').attr('x', 0).attr('dy', '1.1em').text(w.slice(k).join(' '));
+      if (node.getComputedTextLength() <= max) return;
+      el.text(s);
+    }
     for (let n = s.length; n > 1 && node.getComputedTextLength() > max; n--) node.textContent = s.slice(0, n - 1).trimEnd() + '…';
   };
 
@@ -242,6 +254,8 @@ function drawWheel(el, tree, { open, tip, hint }) {
     .attr('transform', (d) => labelTransform(d.current))
     .style('font-weight', (d) => (d.children ? 700 : 400))
     .each(function (d) { fit(this, d, d); });
+  // a fonte pode chegar depois da medida: refaz o ajuste quando carregar
+  document.fonts?.ready.then(() => label.each(function (d) { if (labelVisible(d.current)) fit(this, d, d.current); }));
 
   let armed = null;
   function showTip(e, d) {
@@ -419,6 +433,7 @@ function addPanel(data, el = $('#panels').appendChild(document.createElement('se
       <div class="seg" role="group" aria-label="${t('view.label')}">
         <button data-view="wheel" aria-pressed="${view === 'wheel'}">${t('view.wheel')}</button><button data-view="table" aria-pressed="${view === 'table'}">${t('view.cards')}</button>
       </div>
+      <button class="ghost img" data-fmt="svg">SVG</button><button class="ghost img" data-fmt="png">PNG</button>
       <button class="ghost csv">${t('csv')}</button></div></div>
     <div class="mtabs" role="group" aria-label="${t('g.label')}"></div><div class="wheel"></div><div class="table" hidden></div><div class="extras" hidden></div>`;
   // Abre no primeiro grupo com roda legível (≥3 modificadores com sugestões); senão, no primeiro com alguma.
@@ -431,7 +446,8 @@ function addPanel(data, el = $('#panels').appendChild(document.createElement('se
     else if (b.dataset.view) {
       p.view = b.dataset.view;
       el.querySelectorAll('.seg button').forEach((x) => x.setAttribute('aria-pressed', x === b));
-    } else if (b.classList.contains('csv')) return download(`askwheel-${dataSrc(data)}-${data.keyword}.csv`, toCsv(data), 'text/csv');
+    } else if (b.dataset.fmt) return exportSvg(el.querySelector('.wheel svg'), `askwheel-${dataSrc(data)}-${data.keyword}-${p.group}`, b.dataset.fmt, '#ffffff');
+    else if (b.classList.contains('csv')) return download(`askwheel-${dataSrc(data)}-${data.keyword}.csv`, toCsv(data), 'text/csv');
     else return;
     renderPanel(p);
   });
@@ -457,6 +473,7 @@ function renderPanel(p) {
   q('.wheel').hidden = isExtras || p.view !== 'wheel';
   q('.table').hidden = isExtras || p.view !== 'table';
   q('.seg').hidden = isExtras;
+  el.querySelectorAll('.img').forEach((b) => (b.hidden = isExtras || p.view !== 'wheel'));
   if (isExtras) return drawExtras(q('.extras'), data.extras);
   const group = data.groups[p.group];
   if (p.view === 'wheel') drawGroupWheel(q('.wheel'), data, group);
@@ -479,6 +496,7 @@ function renderPaa() {
   $('#paa-install').hidden = ext;
   $('#paa-map').hidden = !paa;
   $('#paa-csv').hidden = !paa;
+  $('#paa-svg').hidden = $('#paa-png').hidden = !paa;
   $('#paa-count').textContent = paa ? t('paa.count', { n: countTree(paa) }) : '';
   // drawMap mede o texto: com #paa escondido as larguras saem 0. showPaa redesenha ao mostrar.
   if (paa && !$('#paa').hidden) drawMap($('#paa-map'), paa);
@@ -622,13 +640,13 @@ const csvCell = (c) => `"${String(c).replace(/^[=+\-@\t\r]/, "'$&").replace(/"/g
 const csvRows = (rows) => rows.map((r) => r.map(csvCell).join(',')).join('\n');
 
 function toCsv(data) {
-  const rows = [['grupo', 'modificador', 'sugestao', 'fonte']];
+  const rows = [['csv.group', 'csv.mod', 'csv.sugg', 'csv.src'].map((k) => t(k))];
   for (const k of GROUPS) for (const m of data.groups[k]?.modifiers || []) for (const t of m.items) rows.push([k, m.name ?? '', t, dataSrc(data)]);
   return csvRows(rows);
 }
 
 function paaCsv(tree) {
-  const rows = [['pergunta', 'pergunta_pai', 'nivel']];
+  const rows = [['csv.q', 'csv.parent', 'csv.level'].map((k) => t(k))];
   (function walk(n, parent, depth) {
     if (depth) rows.push([n.name, parent, depth]);
     (n.children || []).forEach((c) => walk(c, depth ? n.name : '', depth + 1));
@@ -642,6 +660,40 @@ function download(name, text, type) {
   a.download = name;
   a.click();
   setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
+// Exporta um <svg> da tela como SVG ou PNG: copia o estilo calculado para dentro do clone (o CSS da página não vai junto).
+const SVG_PROPS = ['fill', 'fill-opacity', 'stroke', 'stroke-width', 'font-family', 'font-size', 'font-weight', 'text-anchor', 'dominant-baseline'];
+function exportSvg(svg, name, fmt, bg) {
+  const clone = svg.cloneNode(true);
+  const src = [svg, ...svg.querySelectorAll('*')], dst = [clone, ...clone.querySelectorAll('*')];
+  src.forEach((e, i) => {
+    const cs = getComputedStyle(e);
+    dst[i].setAttribute('style', SVG_PROPS.map((k) => `${k}:${cs.getPropertyValue(k)}`).join(';'));
+    dst[i].removeAttribute('tabindex');
+  });
+  clone.querySelectorAll('title').forEach((e) => e.remove());
+  const vb = svg.viewBox.baseVal;
+  const w = vb && vb.width ? vb.width : Number(svg.getAttribute('width')), h = vb && vb.width ? vb.height : Number(svg.getAttribute('height'));
+  clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+  clone.setAttribute('width', w);
+  clone.setAttribute('height', h);
+  if (!clone.getAttribute('viewBox')) clone.setAttribute('viewBox', `0 0 ${w} ${h}`);
+  const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+  const [x0, y0] = vb && vb.width ? [vb.x, vb.y] : [0, 0];
+  for (const [k, v] of Object.entries({ x: x0, y: y0, width: w, height: h, fill: bg, style: '' })) rect.setAttribute(k, v);
+  clone.insertBefore(rect, clone.firstChild);
+  const xml = new XMLSerializer().serializeToString(clone);
+  if (fmt === 'svg') return download(`${name}.svg`, xml, 'image/svg+xml');
+  // PNG: 2x para ficar nítido; data: URL porque a CSP não libera blob: em img-src
+  const img = new Image();
+  img.onload = () => {
+    const c = document.createElement('canvas');
+    c.width = w * 2; c.height = h * 2;
+    c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+    c.toBlob((b) => { const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = `${name}.png`; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000); });
+  };
+  img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(xml);
 }
 
 async function copy(text, btn, done = t('copied')) {
@@ -664,13 +716,6 @@ const siteUrl = () => {
   const dir = location.pathname.replace(/[^/]*$/, '');
   return location.origin + (/^[\w/.~-]*$/.test(dir) ? dir : '/');
 };
-
-function installCommand() {
-  const origin = siteUrl();
-  // Um curl só, com --fail-early: qualquer arquivo que falhe impede o "instalada".
-  const files = [...['SKILL.md', 'collect.py', 'render.py'].map((f) => [`skill/${f}`, f]), ...['index.html', 'i18n.js', 'app.js', 'style.css', 'modifiers.json'].map((f) => [f, `site/${f}`])];
-  return `d=~/.claude/skills/askwheel; mkdir -p "$d/site" && curl -fsSL --fail-early ${files.map(([url, out]) => `-o "$d/${out}" ${origin}${url}`).join(' ')} && echo "${t('install.done')} $d"`;
-}
 
 // O código do bookmarklet fica legível em paa.js; aqui vira um link javascript: com o endereço do site.
 async function setupBookmarklet() {
@@ -723,7 +768,6 @@ function setLang(l, save = false) {
   if (save) try { localStorage.setItem('askwheel-lang', uiLang); } catch {}
   $('#ui-lang').value = uiLang;
   applyI18n();
-  $('#install-cmd').textContent = installCommand();
   $('#bm-msg').textContent = '';
   if (state.status) setStatus(...state.status);
   if (state.keyword) $('#res-title').textContent = t('res.title', { kw: state.keyword });
@@ -765,6 +809,7 @@ function init() {
     selectTab('search');
     search(kw, $('#hl').value, $('#gl').value);
   });
+  for (const fmt of ['svg', 'png']) $(`#paa-${fmt}`).addEventListener('click', () => exportSvg($('#paa-map svg'), `askwheel-paa-${state.keyword}`, fmt, getComputedStyle($('#paa-map')).backgroundColor));
   $('#paa-csv').addEventListener('click', () => download(`askwheel-paa-${state.keyword}.csv`, paaCsv(state.paa), 'text/csv'));
   $('#share').addEventListener('click', (e) => {
     const { keyword: q, hl, gl } = state;

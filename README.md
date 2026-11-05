@@ -37,9 +37,9 @@ Opção por linha de comando (baixa o wrangler via npx, não instala globalmente
 npx wrangler pages deploy public --project-name askwheel
 ```
 
-A aba **Skill p/ Claude Code** monta o comando de instalação com o endereço do próprio site.
+## Skill (opcional, sem aba no site)
 
-## Skill (opcional)
+A aba de instalação foi removida do site; os arquivos em `public/skill/` continuam no repositório. Ver `IA-futuro.md`.
 
 A skill coleta os mesmos dados (`collect.py`, mesma lógica do `app.js`), acrescenta análise do Claude (intenção, clusters, pautas, perguntas prioritárias) e gera um HTML único reaproveitando o site (`render.py` embute `index.html`, `style.css`, `i18n.js`, `app.js` e os dados). Os dados extras aparecem na aba **Extras (Claude)**.
 
