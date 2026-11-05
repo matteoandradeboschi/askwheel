@@ -17,7 +17,8 @@ Free, static search-listening site (AnswerThePublic-style): one search box: keyw
 
 - Grouping logic exists twice (`app.js` `assemble` and `collect.py` `assemble`): change both together.
 - Keep both on the same endpoint params (`SOURCES` in each file: `client=chrome`, `ie/oe=utf-8`, `ds=yt|sh`; Bing `qsonhs.aspx`, skipping `Type: "SC"`). Python omits only the JSONP wiring: `callback=` for Google/YouTube/Shopping, `type=cb&cb=` for Bing (with `type=cb` Bing returns JS, not JSON).
-- No build step, no npm deps. D3 from cdnjs pinned to `7.9.0`.
+- No build step, no npm deps. D3 from cdnjs pinned to `7.9.0` with SRI (`integrity` in `index.html`: update the hash if the version changes).
+- `public/_headers` (Cloudflare Pages) sets the CSP: a new external script host (CDN, JSONP endpoint) must be added to `script-src`, or it is blocked.
 - UI copy in Portuguese, sentence case.
 
 ## Test locally
