@@ -297,7 +297,12 @@ function drawMap(el, tree) {
     const t = add('text', { x: tx, y: n.y, class: n.depth === 0 ? 'root' : 'q' });
     t.textContent = n.name;
     if (n.depth > 0) {
-      t.addEventListener('click', () => window.open(SOURCES.google.open + encodeURIComponent(n.name), '_blank', 'noopener'));
+      const go = () => window.open(SOURCES.google.open + encodeURIComponent(n.name), '_blank', 'noopener');
+      t.addEventListener('click', go);
+      // teclado: Tab chega na pergunta, Enter abre a busca
+      t.setAttribute('tabindex', '0');
+      t.setAttribute('role', 'link');
+      t.addEventListener('keydown', (e) => { if (e.key === 'Enter') go(); });
       add('title', {}, t).textContent = 'Buscar no Google';
     }
     const end = tx + t.getComputedTextLength();
