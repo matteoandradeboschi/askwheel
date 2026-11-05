@@ -22,7 +22,7 @@ const SOURCES = {
 const SITE_SOURCES = ['google', 'shopping'];
 // Só na skill (CORS bloqueia no navegador). open pode ser função(data).
 const SKILL_SOURCES = {
-  amazon: { label: 'Amazon', prep: 'na', open: (d) => `https://www.${d.marketplace || 'amazon.it'}/s?k=` },
+  amazon: { label: 'Amazon', prep: 'na', open: (d) => `https://www.${encodeURIComponent(d.marketplace || 'amazon.it')}/s?k=` },
   tiktok: { label: 'TikTok', open: 'https://www.tiktok.com/search?q=' },
   trends: { label: 'Google Trends', open: 'https://trends.google.com/trends/explore?q=' },
 };
@@ -339,7 +339,7 @@ function drawTable(el, data, group) {
 }
 
 const plusBtn = (t) => `<button class="plus" data-text="${esc(t)}" title="Copiar" aria-label="Copiar “${esc(t)}”">+</button>`;
-const linkTo = (data, t) => `<a href="${openUrl(data, t)}" target="_blank" rel="noopener">${esc(t)}</a>`;
+const linkTo = (data, t) => `<a href="${esc(openUrl(data, t))}" target="_blank" rel="noopener">${esc(t)}</a>`;
 
 // Lista única com todas as fontes, etiqueta "grupo / modificador" e filtros (como a lista de palavras-chave do ATP).
 function renderList() {
@@ -401,10 +401,10 @@ function renderPanel(p) {
   const { data, el } = p;
   const q = (s) => el.querySelector(s);
   const total = GROUPS.reduce((n, k) => n + (data.groups[k]?.count || 0), 0);
-  q('h2').innerHTML = `${esc(dataLabel(data))} <small>${total} sugestões</small>`;
+  q('h2').innerHTML = `${esc(dataLabel(data))} <small>${Number(total)} sugestões</small>`;
   const keys = GROUPS.filter((k) => data.groups[k]).concat(data.extras ? ['extras'] : []);
   q('.mtabs').innerHTML = keys.map((k) => `<button data-group="${k}" aria-pressed="${k === p.group}">${
-    k === 'extras' ? '' : `<b>${data.groups[k].count}</b>`}${LABELS[k]}</button>`).join('');
+    k === 'extras' ? '' : `<b>${Number(data.groups[k].count)}</b>`}${LABELS[k]}</button>`).join('');
 
   const isExtras = p.group === 'extras';
   q('.extras').hidden = !isExtras;
