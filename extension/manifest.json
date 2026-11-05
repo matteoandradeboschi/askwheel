@@ -7,7 +7,7 @@
   "host_permissions": ["https://www.google.com/*"],
   "background": { "service_worker": "background.js", "scripts": ["background.js"] },
   "content_scripts": [{
-    "matches": ["https://askwheel.pages.dev/*", "https://*.askwheel.pages.dev/*"],
+    "matches": ["https://askwheel.matteoandradeboschi.workers.dev/*"],
     "js": ["site.js"],
     "run_at": "document_start"
   }],

@@ -31,10 +31,10 @@ O rascunho da ficha e o material estão na branch `feat/extension-store` (`exten
 Volume de busca, CPC, dificuldade e alertas automáticos. Alternativa grátis: Google Keyword Planner (faixas de volume, com conta Ads).
 
 ## Testes manuais pendentes
-- [ ] Deploy: Cloudflare Pages → Connect to Git, nome `askwheel`, build vazio, output `public`.
+- [x] Deploy: Cloudflare Workers (static assets) via Git, `wrangler.jsonc`, URL `askwheel.matteoandradeboschi.workers.dev`.
 - [ ] Extensão (semana que vem): testar e implementar o que faltar, regenerar `askwheel-paa.zip`.
 - [ ] `robots.txt` e sitemap: adiar até o MVP estar no ar.
 - [ ] `og:` tags (título, descrição, imagem) para links compartilhados.
-- [ ] **Próximo:** console do preview do Cloudflare Pages: nenhuma violação de CSP (`public/_headers`).
+- [ ] **Próximo:** console do site publicado: nenhuma violação de CSP (`public/_headers`).
 - [ ] Extensão recarregada (pede a permissão `storage`): duas buscas rápidas seguidas, captcha parado por mais de 30 s.
 - [ ] Bookmarklet no google.it.

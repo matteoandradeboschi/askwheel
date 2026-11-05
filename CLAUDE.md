@@ -1,10 +1,10 @@
 # AskWheel
 
-Free, static search-listening site (AnswerThePublic-style): one search box: keyword + modifiers → autocomplete from Google and Google Shopping at once (`SITE_SOURCES`, JSONP from the visitor's browser) → one sunburst (D3) + table panel per source, plus a People Also Ask mind map (horizontal tree, same look as the `paa-mapa` skill). YouTube and Bing stay in `SOURCES` only for skill data. Hosted on Cloudflare Pages (free). No backend, no analytics. Amazon, TikTok, Google Trends block browser requests (CORS): the site can't offer them (would need a proxy), but the skill supports them (Python, no CORS); Instagram isn't reachable without login. People Also Ask needs a real Google results page (JS-rendered), so the site collects it with a bookmarklet (`public/paa.js`) the visitor runs on google.com, which sends data back via `#paa=` in the URL; the site then re-runs the search so everything shows together.
+Free, static search-listening site (AnswerThePublic-style): one search box: keyword + modifiers → autocomplete from Google and Google Shopping at once (`SITE_SOURCES`, JSONP from the visitor's browser) → one sunburst (D3) + table panel per source, plus a People Also Ask mind map (horizontal tree, same look as the `paa-mapa` skill). YouTube and Bing stay in `SOURCES` only for skill data. Hosted on Cloudflare Workers static assets (free, `wrangler.jsonc`, URL `askwheel.matteoandradeboschi.workers.dev`). No backend, no analytics. Amazon, TikTok, Google Trends block browser requests (CORS): the site can't offer them (would need a proxy), but the skill supports them (Python, no CORS); Instagram isn't reachable without login. People Also Ask needs a real Google results page (JS-rendered), so the site collects it with a bookmarklet (`public/paa.js`) the visitor runs on google.com, which sends data back via `#paa=` in the URL; the site then re-runs the search so everything shows together.
 
 ## Layout
 
-- `public/` is the deploy root (upload as-is to Cloudflare Pages).
+- `public/` is the deploy root (static assets of the Worker, deployed from `main`).
 - `public/app.js`: collection (`buildPlan`, `jsonp`, `assemble`), panels (wheel, table, extras), PAA map (`drawMap`), UI. Also renders preloaded data from `window.__WHEEL_DATA__` (used by the skill's standalone HTML).
 - `public/i18n.js`: UI strings (`I18N.pt|en|it`). `index.html` marks elements with `data-i18n` (innerHTML), `data-i18n-ph`, `data-i18n-label`, `data-i18n-content` and keeps the pt text as fallback; `app.js` uses `t('key', { vars })`. UI language: saved in `localStorage` (`askwheel-lang`), else browser language, else en; switch in the header (`#ui-lang`). Separate from the search language (`#hl`, modifiers).
 - `public/paa.js`: PAA bookmarklet source. `app.js` fetches it, replaces `'__SITE__'` with the site URL and sets it as the `javascript:` link. No `//` comments (it becomes a URL). Keep the `void` before the IIFE: Firefox replaces the page with a bookmarklet's return value. Depends on Google's DOM (`.related-question-pair[data-q]`, `[role=button][aria-expanded]`): breaks if Google changes it.
@@ -19,7 +19,7 @@ Free, static search-listening site (AnswerThePublic-style): one search box: keyw
 - Grouping logic exists twice (`app.js` `assemble` and `collect.py` `assemble`): change both together.
 - Keep both on the same endpoint params (`SOURCES` in each file: `client=chrome`, `ie/oe=utf-8`, `ds=yt|sh`; Bing `qsonhs.aspx`, skipping `Type: "SC"`). Python omits only the JSONP wiring: `callback=` for Google/YouTube/Shopping, `type=cb&cb=` for Bing (with `type=cb` Bing returns JS, not JSON).
 - No build step, no npm deps. D3 from cdnjs pinned to `7.9.0` with SRI (`integrity` in `index.html`: update the hash if the version changes).
-- `public/_headers` (Cloudflare Pages) sets the CSP: a new external script host (CDN, JSONP endpoint) must be added to `script-src`, or it is blocked.
+- `public/_headers` (Cloudflare) sets the CSP: a new external script host (CDN, JSONP endpoint) must be added to `script-src`, or it is blocked.
 - UI copy lives in `public/i18n.js`, sentence case: add every new string in pt, en and it.
 
 ## Test locally

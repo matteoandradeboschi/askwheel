@@ -22,7 +22,7 @@ Depois, recarregue o AskWheel e busque: o mapa de perguntas aparece em uns 20 se
 
 ## Desenvolvimento local
 
-O `manifest.json` distribuído só atende `askwheel.pages.dev` (e os previews `*.askwheel.pages.dev`): com `localhost` nos `matches`, qualquer app rodando na máquina poderia pedir abas do Google com a sua sessão. Para testar com `python3 -m http.server 8000 --directory public`, acrescente à mão, só na sua cópia local, em `content_scripts.matches`:
+O `manifest.json` distribuído só atende `askwheel.matteoandradeboschi.workers.dev`: com `localhost` nos `matches`, qualquer app rodando na máquina poderia pedir abas do Google com a sua sessão. Para testar com `python3 -m http.server 8000 --directory public`, acrescente à mão, só na sua cópia local, em `content_scripts.matches`:
 
 ```json
 "http://localhost/*", "http://127.0.0.1/*"
