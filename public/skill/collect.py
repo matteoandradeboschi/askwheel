@@ -171,7 +171,7 @@ def assemble(kw, plan, results, hl, gl, src):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("keyword")
-    ap.add_argument("--hl", default="it", help="idioma: pt, it, en, es")
+    ap.add_argument("--hl", default="it", help="idioma dos modificadores: pt, it, en, es (outros, ex.: fr, de, usam en)")
     ap.add_argument("--gl", default="it", help="país: it, br, pt, us, gb, es, fr, de")
     ap.add_argument("-o", "--out", default="-")
     ap.add_argument("--source", default="google", choices=[*SOURCES, *LOCAL_SOURCES])
