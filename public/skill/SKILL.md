@@ -9,7 +9,7 @@ Mesma coleta do site AskWheel, mais o que só o Claude faz. O HTML final reaprov
 
 ## Entrada
 
-`$ARGUMENTS` = `<keyword> [--hl it|pt|en|es] [--gl it|br|pt|us|gb|es|fr|de] [--source google|youtube|shopping|bing|amazon|tiktok|trends]`. Sem `--hl`/`--gl`: deduza do idioma da keyword; na dúvida use `it`/`it`. Sem `--source`: `google`. Uma fonte por execução. `amazon`, `tiktok` e `trends` só existem na skill (o navegador bloqueia por CORS, o site não os oferece). `amazon` usa a loja do `--gl` (it, br, us, gb, es, fr, de; pt usa amazon.es; outros caem em amazon.it). `tiktok` ignora `--hl`/`--gl` (os resultados seguem a região do IP de quem roda). `trends` é experimental: devolve tópicos/produtos (títulos), não consultas, e o Google pode limitar (429). Instagram e People Also Ask não são suportados.
+`$ARGUMENTS` = `<keyword> [--hl it|pt|en|es] [--gl it|br|pt|us|gb|es|fr|de] [--source google|youtube|shopping|bing|amazon|tiktok|trends]`. Sem `--hl`/`--gl`: deduza do idioma da keyword; na dúvida use `it`/`it`. Para fr/de (sem modificadores próprios) use `--hl en`: outros idiomas caem nos modificadores em `en`. Sem `--source`: `google`. Uma fonte por execução. `amazon`, `tiktok` e `trends` só existem na skill (o navegador bloqueia por CORS, o site não os oferece). `amazon` usa a loja do `--gl` (it, br, us, gb, es, fr, de; pt usa amazon.es; outros caem em amazon.it). `tiktok` ignora `--hl`/`--gl` (os resultados seguem a região do IP de quem roda). `trends` é experimental: devolve tópicos/produtos (títulos), não consultas, e o Google pode limitar (429). Instagram e People Also Ask não são suportados.
 
 ## Passos
 

@@ -11,20 +11,20 @@
 <header class="top">
   <a class="brand" href="./">Ask<span>Wheel</span></a>
   <nav class="tabs" role="tablist">
-    <button role="tab" data-tab="search" aria-selected="true">Buscar</button>
-    <button role="tab" data-tab="ext">Extensão PAA</button>
-    <button role="tab" data-tab="skill">Skill p/ Claude Code</button>
-    <button role="tab" data-tab="about">Como funciona</button>
+    <button role="tab" id="tabbtn-search" aria-controls="tab-search" data-tab="search" aria-selected="true">Buscar</button>
+    <button role="tab" id="tabbtn-ext" aria-controls="tab-ext" data-tab="ext" aria-selected="false">Extensão PAA</button>
+    <button role="tab" id="tabbtn-skill" aria-controls="tab-skill" data-tab="skill" aria-selected="false">Skill p/ Claude Code</button>
+    <button role="tab" id="tabbtn-about" aria-controls="tab-about" data-tab="about" aria-selected="false">Como funciona</button>
   </nav>
 </header>
 
 <main>
-  <section id="tab-search" class="tab">
+  <section id="tab-search" class="tab" role="tabpanel" aria-labelledby="tabbtn-search">
     <div class="hero">
       <h1>O que as pessoas buscam na internet?</h1>
       <p class="muted">Digite uma palavra-chave e veja, numa busca só, o autocomplete do Google e do Google Shopping (perguntas, preposições, comparações, a–z, 0–9, relacionadas) e o mapa do People Also Ask. Grátis, sem cadastro.</p>
       <form id="form" class="search">
-        <input id="q" name="q" type="search" placeholder="ex.: caffè, juros compostos, bicicleta elétrica" autocomplete="off" required>
+        <input id="q" name="q" type="search" aria-label="Palavra-chave" placeholder="ex.: caffè, juros compostos, bicicleta elétrica" autocomplete="off" required>
         <select id="hl" name="hl" aria-label="Idioma">
           <option value="pt">Português</option>
           <option value="it">Italiano</option>
@@ -43,7 +43,7 @@
         </select>
         <button id="go" type="submit">Buscar</button>
       </form>
-      <div id="status" class="status" hidden><div class="bar"><i></i></div><span></span></div>
+      <div id="status" class="status" aria-live="polite" hidden><div class="bar"><i></i></div><span></span></div>
     </div>
 
     <div id="results" hidden>
@@ -63,7 +63,7 @@
         </div>
         <div id="paa-help" class="paa-help">
           <div id="paa-prog" class="status" hidden><div class="bar"><i></i></div><span></span></div>
-          <p id="paa-msg" hidden></p>
+          <p id="paa-msg" aria-live="polite" hidden></p>
           <div id="paa-install">
             <p>O Google só mostra o People Also Ask na página de resultados dele. Com a extensão <b>AskWheel PAA</b>, ele aparece aqui sozinho a cada busca.</p>
             <p><a class="bm" href="#" data-goto="ext">Instalar a extensão</a> Firefox, Chrome, Edge, Brave e Opera, no computador.</p>
@@ -90,7 +90,7 @@
     </div>
   </section>
 
-  <section id="tab-ext" class="tab prose" hidden>
+  <section id="tab-ext" class="tab prose" role="tabpanel" aria-labelledby="tabbtn-ext" hidden>
     <h1>Extensão AskWheel PAA</h1>
     <p>Com a extensão, o People Also Ask do Google aparece sozinho a cada busca: ela abre a busca no Google numa aba em segundo plano, lê as perguntas, traz o mapa para cá e fecha a aba. Não guarda nada e não envia dados para nenhum outro lugar.</p>
     <p><a class="bm" href="askwheel-paa.zip" download>Baixar a extensão (.zip)</a></p>
@@ -109,7 +109,7 @@
     <p>Depois, recarregue esta página e busque. Se o Google pedir verificação ou mostrar a tela de cookies, a aba dele fica aberta para você resolver.</p>
   </section>
 
-  <section id="tab-skill" class="tab prose" hidden>
+  <section id="tab-skill" class="tab prose" role="tabpanel" aria-labelledby="tabbtn-skill" hidden>
     <h1>Skill para Claude Code</h1>
     <p>Opcional. O site cobre a coleta e a visualização. A skill faz o mesmo dentro do <a href="https://claude.com/claude-code" target="_blank" rel="noopener">Claude Code</a> e acrescenta o que o site não faz:</p>
     <ul>
@@ -119,14 +119,14 @@
       <li>Gera um HTML único, offline, com este mesmo relatório e uma aba extra <b>Extras (Claude)</b>.</li>
     </ul>
     <h2>Instalar</h2>
-    <p>Cole no terminal (Linux/macOS). Baixa os arquivos da skill e do site para <code>~/.claude/skills/askwheel</code>:</p>
+    <p>Cole no terminal (Linux/macOS). Baixa os arquivos da skill e do site para <code>~/.claude/skills/askwheel</code>. É código que o Claude Code vai executar no seu computador: se quiser, confira antes os arquivos listados abaixo.</p>
     <div class="code"><pre id="install-cmd"></pre><button class="ghost copy" data-copy="install-cmd">Copiar</button></div>
     <p>Depois, no Claude Code:</p>
     <div class="code"><pre id="usage-cmd">/askwheel caffè --hl it --gl it</pre><button class="ghost copy" data-copy="usage-cmd">Copiar</button></div>
     <p class="muted">Requisitos: Python 3 (só a biblioteca padrão, nada para instalar). Para atualizar, rode o comando de instalação de novo. Arquivos: <a href="skill/SKILL.md" target="_blank">SKILL.md</a>, <a href="skill/collect.py" target="_blank">collect.py</a>, <a href="skill/render.py" target="_blank">render.py</a>.</p>
   </section>
 
-  <section id="tab-about" class="tab prose" hidden>
+  <section id="tab-about" class="tab prose" role="tabpanel" aria-labelledby="tabbtn-about" hidden>
     <h1>Como funciona</h1>
     <ol>
       <li>A palavra-chave é combinada com modificadores no idioma escolhido: perguntas (<i>como, por que, qual…</i>), preposições (<i>para, com, sem…</i>), comparações (<i>vs, ou…</i>), letras a–z e números 0–9.</li>
@@ -139,6 +139,7 @@
       <li>Sem volume de busca nem CPC: não existe fonte gratuita para esses dados.</li>
       <li>Usa endpoints não oficiais, que podem mudar ou limitar sem aviso.</li>
       <li>Os resultados variam por idioma, país e momento.</li>
+      <li>Francês e alemão ainda não têm modificadores: para França e Alemanha, escolha o idioma English (outros idiomas usam os modificadores em inglês).</li>
       <li>Bloqueadores de anúncio podem impedir as consultas.</li>
       <li>Amazon, TikTok e Google Trends não estão aqui: bloqueiam consultas do navegador (CORS). Existem só na skill para Claude Code.</li>
       <li>Instagram exige login.</li>
@@ -152,7 +153,7 @@
 
 <footer class="foot muted">AskWheel · grátis e de código aberto · dados do autocomplete do Google e do Google Shopping e do People Also Ask</footer>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js" integrity="sha512-vc58qvvBdrDR4etbxMdlTt4GBQk1qjvyORR2nrsPsFPyrs+/u5c3+1Ct6upOgdZoIl7eq6k3a1UPDSNAQi/32A==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <script src="app.js"></script>
 </body>
 </html>

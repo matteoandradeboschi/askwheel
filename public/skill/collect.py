@@ -126,10 +126,11 @@ def fetch(q, hl, gl, src):
     try:
         with urllib.request.urlopen(req, timeout=8) as r:
             body = r.read().decode("utf-8")
-        time.sleep(0.12)
         return decode(body)
     except Exception:
         return None
+    finally:
+        time.sleep(0.12)  # também após falha: sem pausa, um bloqueio vira rajada (igual ao sleep do app.js)
 
 
 def assemble(kw, plan, results, hl, gl, src):
@@ -145,10 +146,11 @@ def assemble(kw, plan, results, hl, gl, src):
             if key == norm(q):
                 continue
             by_word = group in ("alphabeticals", "numbers") or has_token(s, mod or "")
+            # Cada sugestão fica só no primeiro modificador (na ordem do plano) em que se encaixa.
             if group != "related" and has_keyword(s, kw) and by_word:
-                if all(norm(x) != key for x in m["items"]):
+                if key not in assigned:
                     m["items"].append(s)
-                assigned.add(key)
+                    assigned.add(key)
             else:
                 leftovers.append(s)
     rel = groups["related"]["modifiers"][0]
@@ -170,7 +172,7 @@ def assemble(kw, plan, results, hl, gl, src):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("keyword")
-    ap.add_argument("--hl", default="it", help="idioma: pt, it, en, es")
+    ap.add_argument("--hl", default="it", help="idioma dos modificadores: pt, it, en, es (outros, ex.: fr, de, usam en)")
     ap.add_argument("--gl", default="it", help="país: it, br, pt, us, gb, es, fr, de")
     ap.add_argument("-o", "--out", default="-")
     ap.add_argument("--source", default="google", choices=[*SOURCES, *LOCAL_SOURCES])

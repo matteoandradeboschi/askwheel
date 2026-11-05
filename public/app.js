@@ -9,7 +9,7 @@ const first = (d) => d?.[1];
 const SOURCES = {
   google: { label: 'Google', url: goog(''), parse: first, open: 'https://www.google.com/search?q=' },
   youtube: { label: 'YouTube', url: goog('&ds=yt'), parse: first, open: 'https://www.youtube.com/results?search_query=' },
-  shopping: { label: 'Google Shopping', url: goog('&ds=sh'), parse: first, open: 'https://www.google.com/search?tbm=shop&q=' },
+  shopping: { label: 'Google Shopping', url: goog('&ds=sh'), parse: first, open: 'https://www.google.com/search?udm=28&q=' },
   bing: {
     label: 'Bing',
     url: (q, hl, gl, cb) => `https://api.bing.com/qsonhs.aspx?type=cb&cb=${cb}&mkt=${hl}-${gl.toUpperCase()}&q=${encodeURIComponent(q)}`,
@@ -22,7 +22,7 @@ const SOURCES = {
 const SITE_SOURCES = ['google', 'shopping'];
 // Só na skill (CORS bloqueia no navegador). open pode ser função(data).
 const SKILL_SOURCES = {
-  amazon: { label: 'Amazon', prep: 'na', open: (d) => `https://www.${d.marketplace || 'amazon.it'}/s?k=` },
+  amazon: { label: 'Amazon', prep: 'na', open: (d) => `https://www.${encodeURIComponent(d.marketplace || 'amazon.it')}/s?k=` },
   tiktok: { label: 'TikTok', open: 'https://www.tiktok.com/search?q=' },
   trends: { label: 'Google Trends', open: 'https://trends.google.com/trends/explore?q=' },
 };
@@ -52,10 +52,11 @@ function jsonp(src, q, hl, gl, timeout = 8000) {
   return new Promise((resolve) => {
     const cb = '__aw' + Math.random().toString(36).slice(2);
     const s = document.createElement('script');
-    const done = (list) => { clearTimeout(t); delete window[cb]; s.remove(); resolve(list); };
-    const t = setTimeout(() => done(null), timeout);
-    window[cb] = (data) => { const l = SOURCES[src].parse(data); done(Array.isArray(l) ? l : []); };
-    s.onerror = () => done(null);
+    const done = (list) => { clearTimeout(t); s.remove(); resolve(list); };
+    // Resposta que chega depois do timeout: cai num no-op (sem ReferenceError) e só então limpa.
+    const t = setTimeout(() => { window[cb] = () => delete window[cb]; done(null); }, timeout);
+    window[cb] = (data) => { delete window[cb]; const l = SOURCES[src].parse(data); done(Array.isArray(l) ? l : []); };
+    s.onerror = () => { delete window[cb]; done(null); };
     s.src = SOURCES[src].url(q, hl, gl, cb);
     document.head.append(s);
   });
@@ -73,7 +74,7 @@ function buildPlan(kw, m) {
 }
 
 // Mesma regra do collect.py: a sugestão fica no modificador se contém a keyword
-// (e o modificador, quando é palavra); o resto vai para "related".
+// (e o modificador, quando é palavra); o resto vai para "related". Cada sugestão aparece uma vez só.
 function assemble(kw, plan, results, meta) {
   const groups = {};
   const assigned = new Set();
@@ -87,9 +88,9 @@ function assemble(kw, plan, results, meta) {
       if (key === norm(step.q)) continue;
       const byWord = step.group === 'alphabeticals' || step.group === 'numbers' || hasToken(s, step.mod ?? '');
       const fits = step.group !== 'related' && hasKeyword(s, kw) && byWord;
+      // Cada sugestão fica só no primeiro modificador (na ordem do plano) em que se encaixa.
       if (fits) {
-        if (!m.items.some((x) => norm(x) === key)) m.items.push(s);
-        assigned.add(key);
+        if (!assigned.has(key)) { m.items.push(s); assigned.add(key); }
       } else leftovers.push(s);
     }
   });
@@ -103,8 +104,12 @@ function assemble(kw, plan, results, meta) {
   return { keyword: kw, ...meta, collected_at: new Date().toISOString(), source: `${meta.src}-autocomplete`, groups };
 }
 
+// modifiers.json é buscado uma vez só (as fontes e as buscas seguintes reusam a mesma promessa).
+let modifiers;
+const loadModifiers = () => (modifiers ??= fetch('modifiers.json').then((r) => r.json()).catch((e) => { modifiers = null; throw e; }));
+
 async function collect(kw, hl, gl, src, onProgress) {
-  const all = window.__WHEEL_MODIFIERS__ || (await fetch('modifiers.json').then((r) => r.json()));
+  const all = window.__WHEEL_MODIFIERS__ || (await loadModifiers());
   const plan = buildPlan(kw, all[hl] || all.en);
   const results = new Array(plan.length);
   let next = 0, done = 0, failed = 0;
@@ -292,7 +297,12 @@ function drawMap(el, tree) {
     const t = add('text', { x: tx, y: n.y, class: n.depth === 0 ? 'root' : 'q' });
     t.textContent = n.name;
     if (n.depth > 0) {
-      t.addEventListener('click', () => window.open(SOURCES.google.open + encodeURIComponent(n.name), '_blank', 'noopener'));
+      const go = () => window.open(SOURCES.google.open + encodeURIComponent(n.name), '_blank', 'noopener');
+      t.addEventListener('click', go);
+      // teclado: Tab chega na pergunta, Enter abre a busca
+      t.setAttribute('tabindex', '0');
+      t.setAttribute('role', 'link');
+      t.addEventListener('keydown', (e) => { if (e.key === 'Enter') go(); });
       add('title', {}, t).textContent = 'Buscar no Google';
     }
     const end = tx + t.getComputedTextLength();
@@ -334,7 +344,7 @@ function drawTable(el, data, group) {
 }
 
 const plusBtn = (t) => `<button class="plus" data-text="${esc(t)}" title="Copiar" aria-label="Copiar “${esc(t)}”">+</button>`;
-const linkTo = (data, t) => `<a href="${openUrl(data, t)}" target="_blank" rel="noopener">${esc(t)}</a>`;
+const linkTo = (data, t) => `<a href="${esc(openUrl(data, t))}" target="_blank" rel="noopener">${esc(t)}</a>`;
 
 // Lista única com todas as fontes, etiqueta "grupo / modificador" e filtros (como a lista de palavras-chave do ATP).
 function renderList() {
@@ -396,10 +406,10 @@ function renderPanel(p) {
   const { data, el } = p;
   const q = (s) => el.querySelector(s);
   const total = GROUPS.reduce((n, k) => n + (data.groups[k]?.count || 0), 0);
-  q('h2').innerHTML = `${esc(dataLabel(data))} <small>${total} sugestões</small>`;
+  q('h2').innerHTML = `${esc(dataLabel(data))} <small>${Number(total)} sugestões</small>`;
   const keys = GROUPS.filter((k) => data.groups[k]).concat(data.extras ? ['extras'] : []);
   q('.mtabs').innerHTML = keys.map((k) => `<button data-group="${k}" aria-pressed="${k === p.group}">${
-    k === 'extras' ? '' : `<b>${data.groups[k].count}</b>`}${LABELS[k]}</button>`).join('');
+    k === 'extras' ? '' : `<b>${Number(data.groups[k].count)}</b>`}${LABELS[k]}</button>`).join('');
 
   const isExtras = p.group === 'extras';
   q('.extras').hidden = !isExtras;
@@ -500,6 +510,8 @@ window.addEventListener('message', (e) => {
 // Consulta Google e Google Shopping ao mesmo tempo; o PAA vem da extensão ou do bookmarklet (paa mantém o que já foi coletado).
 async function search(kw, hl, gl, paa = null) {
   $('#go').disabled = true;
+  // aria-busy: o leitor de tela anuncia só o resultado final, não cada n/140.
+  $('#status').setAttribute('aria-busy', 'true');
   startResults(kw, hl, gl);
   Object.assign(state, { paa, paaWait: null, paaError: null });
   if (!paa && hasExt()) requestPaa(kw, hl, gl);
@@ -517,15 +529,22 @@ async function search(kw, hl, gl, paa = null) {
     setStatus(failed ? `Pronto. ${failed} de ${total} consultas falharam.` : 'Pronto.', 1);
     runs.forEach((r) => addPanel(r.data));
     history.replaceState(null, '', `?${new URLSearchParams({ q: kw, hl, gl })}`);
+  } catch {
+    setStatus('Algo deu errado na busca. Recarregue a página e tente de novo.', 0);
   } finally {
     $('#go').disabled = false;
+    $('#status').setAttribute('aria-busy', 'false');
   }
 }
+
+// Célula que começa com = + - @ (ou tab/CR) vira fórmula no Excel/Sheets: prefixa ' para ficar texto.
+const csvCell = (c) => `"${String(c).replace(/^[=+\-@\t\r]/, "'$&").replace(/"/g, '""')}"`;
+const csvRows = (rows) => rows.map((r) => r.map(csvCell).join(',')).join('\n');
 
 function toCsv(data) {
   const rows = [['grupo', 'modificador', 'sugestao', 'fonte']];
   for (const k of GROUPS) for (const m of data.groups[k]?.modifiers || []) for (const t of m.items) rows.push([k, m.name ?? '', t, dataSrc(data)]);
-  return rows.map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n');
+  return csvRows(rows);
 }
 
 function paaCsv(tree) {
@@ -534,7 +553,7 @@ function paaCsv(tree) {
     if (depth) rows.push([n.name, parent, depth]);
     (n.children || []).forEach((c) => walk(c, depth ? n.name : '', depth + 1));
   })(tree, '', 0);
-  return rows.map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n');
+  return csvRows(rows);
 }
 
 function download(name, text, type) {
@@ -542,7 +561,7 @@ function download(name, text, type) {
   a.href = URL.createObjectURL(new Blob([text], { type }));
   a.download = name;
   a.click();
-  URL.revokeObjectURL(a.href);
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
 }
 
 async function copy(text, btn, done = 'Copiado') {
@@ -555,19 +574,28 @@ async function copy(text, btn, done = 'Copiado') {
 function selectTab(name) {
   document.querySelectorAll('.tabs button').forEach((b) => b.setAttribute('aria-selected', b.dataset.tab === name));
   document.querySelectorAll('.tab').forEach((s) => (s.hidden = s.id !== `tab-${name}`));
+  // drawMap mede o texto: desenhado com a aba escondida, as larguras saem 0. Redesenha ao voltar.
+  if (name === 'search' && state.paa) drawMap($('#paa-map'), state.paa);
 }
 
-const siteUrl = () => (/^https?:/.test(location.protocol) ? location.origin + location.pathname.replace(/[^/]*$/, '') : 'https://SEU-SITE.pages.dev/');
+// O pathname vem da URL e vai para o comando shell e para o bookmarklet: só passa se for um caminho simples.
+const siteUrl = () => {
+  if (!/^https?:/.test(location.protocol)) return 'https://SEU-SITE.pages.dev/';
+  const dir = location.pathname.replace(/[^/]*$/, '');
+  return location.origin + (/^[\w/.~-]*$/.test(dir) ? dir : '/');
+};
 
 function installCommand() {
   const origin = siteUrl();
-  return `d=~/.claude/skills/askwheel; mkdir -p "$d/site" && for f in SKILL.md collect.py render.py; do curl -fsSL ${origin}skill/$f -o "$d/$f"; done && for f in index.html app.js style.css modifiers.json; do curl -fsSL ${origin}$f -o "$d/site/$f"; done && echo "AskWheel skill instalada em $d"`;
+  // Um curl só, com --fail-early: qualquer arquivo que falhe impede o "instalada".
+  const files = [...['SKILL.md', 'collect.py', 'render.py'].map((f) => [`skill/${f}`, f]), ...['index.html', 'app.js', 'style.css', 'modifiers.json'].map((f) => [f, `site/${f}`])];
+  return `d=~/.claude/skills/askwheel; mkdir -p "$d/site" && curl -fsSL --fail-early ${files.map(([url, out]) => `-o "$d/${out}" ${origin}${url}`).join(' ')} && echo "AskWheel skill instalada em $d"`;
 }
 
 // O código do bookmarklet fica legível em paa.js; aqui vira um link javascript: com o endereço do site.
 async function setupBookmarklet() {
   try {
-    const code = (await fetch('paa.js').then((r) => r.text())).replace('__SITE__', siteUrl());
+    const code = (await fetch('paa.js').then((r) => r.text())).replace('__SITE__', () => siteUrl());
     $('#paa-bm').href = 'javascript:' + encodeURIComponent(code);
   } catch { $('#paa-bm').replaceWith('(indisponível nesta cópia offline)'); }
   $('#paa-bm')?.addEventListener('click', (e) => { e.preventDefault(); setStatus('Arraste o botão AskWheel PAA para a barra de favoritos em vez de clicar nele.', 0); });
@@ -588,7 +616,9 @@ function cleanPaa(d) {
     name: String(n.name).slice(0, 300),
     children: depth < 6 && Array.isArray(n.children) ? n.children.filter((c) => typeof c?.name === 'string').slice(0, 50).map((c) => clean(c, depth + 1)) : [],
   });
-  return { keyword: d.keyword, hl: String(d.hl || ''), gl: String(d.gl || ''), tree: clean({ name: d.keyword, children: d.tree.children }, 0) };
+  // keyword limitada: um link #paa= de qualquer lugar dispara a busca completa com ela.
+  const kw = d.keyword.slice(0, 200);
+  return { keyword: kw, hl: String(d.hl || ''), gl: String(d.gl || ''), tree: clean({ name: kw, children: d.tree.children }, 0) };
 }
 
 function defaults() {
@@ -604,8 +634,10 @@ const setSelect = (id, v) => { if ([...$(`#${id}`).options].some((o) => o.value 
 function init() {
   const params = new URLSearchParams(location.search);
   const d = defaults();
-  $('#hl').value = params.get('hl') || d.hl;
-  $('#gl').value = params.get('gl') || d.gl;
+  $('#hl').value = d.hl;
+  $('#gl').value = d.gl;
+  setSelect('hl', params.get('hl'));
+  setSelect('gl', params.get('gl'));
   $('#install-cmd').textContent = installCommand();
   setupBookmarklet();
 

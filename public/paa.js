@@ -9,7 +9,7 @@ void (async () => {
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   const url = new URL(location.href);
   const kw = url.searchParams.get('q');
-  if (!/(^|\.)google\.[a-z.]+$/.test(location.hostname) || url.pathname !== '/search' || !kw) {
+  if (!/^(www\.)?google\.[a-z]{2,3}(\.[a-z]{2})?$/.test(location.hostname) || url.pathname !== '/search' || !kw) {
     alert('AskWheel: abra uma busca no Google e clique no favorito de novo.');
     return;
   }
