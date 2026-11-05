@@ -19,3 +19,6 @@ node_modules/
 # Local test output
 askwheel-*.html
 *.local.json
+
+# Impeccable (histórico local de critiques)
+.impeccable/

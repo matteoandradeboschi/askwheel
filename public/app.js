@@ -37,6 +37,8 @@ const OVERVIEW_LEAVES = 15;
 const PALETTE = ['#f6a58a', '#f9d76b', '#8fbdf7', '#c3b2f9', '#8ddba5', '#f5a3cf', '#fbb877', '#8fdfe8', '#cde58d', '#c3ccd8'];
 
 const $ = (s) => document.querySelector(s);
+const narrow = () => matchMedia('(max-width: 640px)').matches;
+const reducedMotion = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const norm = (s) => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/\s+/g, ' ').trim();
 const hasToken = (text, tok) => ` ${norm(text)} `.includes(` ${norm(tok)} `);
@@ -176,7 +178,10 @@ const tipEl = () => $('#tip') || document.body.appendChild(Object.assign(documen
 function drawWheel(el, tree, { open, tip, hint }) {
   el.replaceChildren();
   const kw = tree.name;
-  const size = 760, r = size / 6;
+  const size = 760, R = size / 2;
+  // raio de cada anel (y da partição: 0–1 miolo, 1–2 modificador, 2–3 sugestões): a faixa de fora é a mais larga
+  const R0 = R * 0.24, R1 = R0 + (R - R0) * 0.3;
+  const rad = (y) => (y <= 1 ? y * R0 : y <= 2 ? R0 + (y - 1) * (R1 - R0) : R1 + (y - 2) * (R - R1));
   const color = d3.scaleOrdinal(tree.children.map((c) => c.name), PALETTE.concat(PALETTE, PALETTE));
   const fill = (d) => { const c = color(d.depth === 1 ? d.data.name : d.parent.data.name); return d.children ? c : d3.interpolateRgb(c, '#fff')(0.6); };
   const root = d3.partition().size([2 * Math.PI, 3])(d3.hierarchy(tree).sum((d) => d.value || 0));
@@ -184,17 +189,26 @@ function drawWheel(el, tree, { open, tip, hint }) {
 
   const arc = d3.arc()
     .startAngle((d) => d.x0).endAngle((d) => d.x1)
-    .padAngle((d) => Math.min((d.x1 - d.x0) / 2, 0.004)).padRadius(r * 1.5)
-    .innerRadius((d) => d.y0 * r).outerRadius((d) => Math.max(d.y0 * r, d.y1 * r - 1));
+    .padAngle((d) => Math.min((d.x1 - d.x0) / 2, 0.004)).padRadius(R0 * 2)
+    .innerRadius((d) => rad(d.y0)).outerRadius((d) => Math.max(rad(d.y0), rad(d.y1) - 1));
   const arcVisible = (d) => d.y1 <= 3 && d.y0 >= 1 && d.x1 > d.x0;
-  const labelVisible = (d) => d.y1 <= 3 && d.y0 >= 1 && (d.y1 - d.y0) * (d.x1 - d.x0) > 0.03;
+  // rótulo só se a fatia tem altura para a letra (largura do arco no meio do anel)
+  const labelVisible = (d) => d.y1 <= 3 && d.y0 >= 1 && ((d.x1 - d.x0) * (rad(d.y0) + rad(d.y1))) / 2 > 12;
   const labelTransform = (d) => {
-    const x = (((d.x0 + d.x1) / 2) * 180) / Math.PI, y = ((d.y0 + d.y1) / 2) * r;
+    const x = (((d.x0 + d.x1) / 2) * 180) / Math.PI, y = (rad(d.y0) + rad(d.y1)) / 2;
     return `rotate(${x - 90}) translate(${y},0) rotate(${x < 180 ? 0 : 180})`;
   };
   const short = (s, n) => (s.length > n ? s.slice(0, n - 1) + '…' : s);
+  // corta o texto pela largura medida da faixa (não por nº de letras), para não vazar da fatia
+  const fit = (node, d, p) => {
+    const s = d.data.name, max = rad(p.y1) - rad(p.y0) - 12;
+    node.textContent = s;
+    if (!node.getComputedTextLength()) return (node.textContent = short(s, 22)); // roda escondida: sem medida
+    for (let n = s.length; n > 1 && node.getComputedTextLength() > max; n--) node.textContent = s.slice(0, n - 1).trimEnd() + '…';
+  };
 
   const svg = d3.create('svg').attr('viewBox', [-size / 2, -size / 2, size, size]);
+  el.append(svg.node());
   const g = svg.append('g');
   const path = g.append('g').selectAll('path').data(root.descendants().slice(1)).join('path')
     .attr('fill', fill)
@@ -203,15 +217,13 @@ function drawWheel(el, tree, { open, tip, hint }) {
     .attr('stroke', '#fff')
     .attr('d', (d) => arc(d.current))
     .style('cursor', 'pointer')
-    .on('click', (e, d) => (d.children ? zoom(d) : window.open(open(d), '_blank', 'noopener')))
-    .on('mousemove', (e, d) => {
-      const t = tipEl();
-      t.innerHTML = tip(d);
-      t.hidden = false;
-      // não deixa o tooltip sair da tela pela direita/embaixo
-      t.style.left = `${Math.min(e.clientX + 14, innerWidth - t.offsetWidth - 8)}px`;
-      t.style.top = `${Math.min(e.clientY + 14, innerHeight - t.offsetHeight - 8)}px`;
+    .on('click', (e, d) => {
+      if (d.children) return zoom(d);
+      // toque: o 1º toque mostra a sugestão inteira, o 2º abre (no mouse o tooltip já aparece ao passar)
+      if (e.pointerType === 'touch' && armed !== d) { armed = d; return showTip(e, d); }
+      window.open(open(d), '_blank', 'noopener');
     })
+    .on('mousemove', showTip)
     .on('mouseleave', () => (tipEl().hidden = true));
 
   const label = g.append('g').attr('text-anchor', 'middle').selectAll('text')
@@ -219,9 +231,19 @@ function drawWheel(el, tree, { open, tip, hint }) {
     .attr('fill-opacity', (d) => +labelVisible(d.current))
     .attr('transform', (d) => labelTransform(d.current))
     .style('font-weight', (d) => (d.children ? 700 : 400))
-    .text((d) => short(d.data.name, d.children ? 18 : 22));
+    .each(function (d) { fit(this, d, d); });
 
-  const center = g.append('circle').attr('r', r).attr('class', 'center').on('click', () => zoom(focus.parent || root));
+  let armed = null;
+  function showTip(e, d) {
+    const t = tipEl();
+    t.innerHTML = tip(d);
+    t.hidden = false;
+    // não deixa o tooltip sair da tela pela direita/embaixo
+    t.style.left = `${Math.min(e.clientX + 14, innerWidth - t.offsetWidth - 8)}px`;
+    t.style.top = `${Math.min(e.clientY + 14, innerHeight - t.offsetHeight - 8)}px`;
+  }
+
+  const center = g.append('circle').attr('r', R0).attr('class', 'center').on('click', () => zoom(focus.parent || root));
   const centerLabel = g.append('text').attr('class', 'center-label').attr('text-anchor', 'middle').attr('dy', '0.35em').text(short(kw, 18));
   let focus = root;
 
@@ -234,7 +256,11 @@ function drawWheel(el, tree, { open, tip, hint }) {
       y0: Math.max(0, d.y0 - p.depth),
       y1: Math.max(0, d.y1 - p.depth),
     }));
-    const t = svg.transition().duration(600);
+    armed = null;
+    tipEl().hidden = true;
+    // no zoom as sugestões mudam de anel (e de largura): recorta o texto para o anel de destino
+    label.each(function (d) { if (labelVisible(d.target)) fit(this, d, d.target); });
+    const t = svg.transition().duration(reducedMotion() ? 0 : 600);
     path.transition(t)
       .tween('data', (d) => { const i = d3.interpolate(d.current, d.target); return (k) => (d.current = i(k)); })
       .filter(function (d) { return +this.getAttribute('fill-opacity') || arcVisible(d.target); })
@@ -247,7 +273,6 @@ function drawWheel(el, tree, { open, tip, hint }) {
       .attrTween('transform', (d) => () => labelTransform(d.current));
   }
 
-  el.append(svg.node());
   const note = document.createElement('p');
   note.className = 'hint muted';
   note.textContent = hint;
@@ -343,7 +368,9 @@ function drawTable(el, data, group) {
     : '<p class="empty">Nenhuma sugestão neste grupo.</p>';
 }
 
-const plusBtn = (t) => `<button class="plus" data-text="${esc(t)}" title="Copiar" aria-label="Copiar “${esc(t)}”">+</button>`;
+const ICON_COPY = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>';
+const ICON_DONE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5L20 7"/></svg>';
+const plusBtn = (t) => `<button class="plus" data-text="${esc(t)}" title="Copiar" aria-label="Copiar “${esc(t)}”">${ICON_COPY}</button>`;
 const linkTo = (data, t) => `<a href="${esc(openUrl(data, t))}" target="_blank" rel="noopener">${esc(t)}</a>`;
 
 // Lista única com todas as fontes, etiqueta "grupo / modificador" e filtros (como a lista de palavras-chave do ATP).
@@ -372,19 +399,20 @@ function drawExtras(el, extras) {
 
 // ---------- painéis ----------
 
-function addPanel(data) {
-  const el = document.createElement('section');
+// el: o espaço reservado da fonte durante a busca (sem ele, cria o painel no fim).
+function addPanel(data, el = $('#panels').appendChild(document.createElement('section'))) {
+  // tela estreita: Cards por padrão (a roda fica pequena demais para ler)
+  const view = narrow() ? 'table' : 'wheel';
   el.className = 'panel';
   el.innerHTML = `<div class="res-head"><h2></h2><div class="actions">
       <div class="seg" role="group" aria-label="Visualização">
-        <button data-view="wheel" aria-pressed="true">Roda</button><button data-view="table" aria-pressed="false">Cards</button>
+        <button data-view="wheel" aria-pressed="${view === 'wheel'}">Roda</button><button data-view="table" aria-pressed="${view === 'table'}">Cards</button>
       </div>
       <button class="ghost csv">Baixar CSV</button></div></div>
     <div class="mtabs" role="group" aria-label="Grupo"></div><div class="wheel"></div><div class="table" hidden></div><div class="extras" hidden></div>`;
-  $('#panels').append(el);
   // Abre no primeiro grupo com roda legível (≥3 modificadores com sugestões); senão, no primeiro com alguma.
   const filled = (k) => data.groups[k]?.modifiers.filter((m) => m.items.length).length || 0;
-  const p = { data, el, view: 'wheel', group: GROUPS.find((k) => filled(k) >= 3) || GROUPS.find((k) => data.groups[k]?.count) || 'questions' };
+  const p = { data, el, view, group: GROUPS.find((k) => filled(k) >= 3) || GROUPS.find((k) => data.groups[k]?.count) || 'questions' };
   el.addEventListener('click', (e) => {
     const b = e.target.closest('button');
     if (!b) return;
@@ -410,6 +438,8 @@ function renderPanel(p) {
   const keys = GROUPS.filter((k) => data.groups[k]).concat(data.extras ? ['extras'] : []);
   q('.mtabs').innerHTML = keys.map((k) => `<button data-group="${k}" aria-pressed="${k === p.group}">${
     k === 'extras' ? '' : `<b>${Number(data.groups[k].count)}</b>`}${LABELS[k]}</button>`).join('');
+  // grupo vazio: aba esmaecida e desativada
+  q('.mtabs').querySelectorAll('button').forEach((b) => (b.disabled = b.dataset.group !== 'extras' && !data.groups[b.dataset.group].count));
 
   const isExtras = p.group === 'extras';
   q('.extras').hidden = !isExtras;
@@ -423,10 +453,11 @@ function renderPanel(p) {
 }
 
 function renderPaa() {
-  const { keyword: kw, hl, gl, paa } = state;
-  $('#paa-open').href = `https://www.google.com/search?${new URLSearchParams({ q: kw, hl, gl })}`;
-  $('#paa-open').textContent = `Abrir “${kw}” no Google`;
+  const { paa } = state;
   $('#paa-help').hidden = !!paa;
+  $('#paa-head').hidden = !paa;
+  // nada coletando nem coletado: só a linha de instalação (que some em telas de toque, ver style.css)
+  $('#paa').classList.toggle('idle', !paa && !state.paaWait && !state.paaError);
   const ext = hasExt();
   const pr = state.paaProg;
   $('#paa-prog').hidden = !state.paaWait || !!state.paaError;
@@ -435,12 +466,21 @@ function renderPaa() {
   $('#paa-msg').textContent = PAA_ERRORS[state.paaError] || '';
   $('#paa-msg').hidden = !$('#paa-msg').textContent;
   $('#paa-install').hidden = ext;
-  $('#paa-manual').hidden = ext && !state.paaError;
-  $('#paa-manual').open = !ext || !!state.paaError;
   $('#paa-map').hidden = !paa;
   $('#paa-csv').hidden = !paa;
   $('#paa-count').textContent = paa ? `${countTree(paa)} perguntas` : '';
-  if (paa) drawMap($('#paa-map'), paa);
+  // drawMap mede o texto: com #paa escondido as larguras saem 0. showPaa redesenha ao mostrar.
+  if (paa && !$('#paa').hidden) drawMap($('#paa-map'), paa);
+  if (state.keyword) {
+    $('#paa-open').href = `https://www.google.com/search?${new URLSearchParams({ q: state.keyword, hl: state.hl, gl: state.gl })}`;
+    $('#paa-open').textContent = `abrir “${state.keyword}” no Google`;
+  }
+}
+
+function showPaa() {
+  if (!$('#paa').hidden) return;
+  $('#paa').hidden = false;
+  if (state.paa) drawMap($('#paa-map'), state.paa);
 }
 
 function startResults(kw, hl, gl) {
@@ -449,7 +489,10 @@ function startResults(kw, hl, gl) {
   $('#overview').hidden = $('#list').hidden = true;
   $('#list-q').value = '';
   $('#res-title').textContent = `Resultados para “${kw}”`;
-  $('#results').hidden = $('#paa').hidden = $('#share').hidden = false;
+  document.body.classList.add('has-results');
+  $('#results').hidden = false;
+  // PAA e "Copiar link" só depois do primeiro resultado: durante a espera, só o progresso das fontes
+  $('#paa').hidden = $('#share').hidden = true;
 }
 
 // ---------- UI ----------
@@ -469,7 +512,7 @@ const PAA_ERRORS = {
   empty: 'O Google não mostrou a caixa “As pessoas também perguntam” para esta busca.',
   captcha: 'O Google pediu uma verificação. Resolva na aba que abriu: a coleta continua sozinha.',
   blocked: 'O Google abriu uma tela intermediária (cookies ou login). Resolva na aba que abriu: a coleta continua sozinha.',
-  timeout: 'O Google está demorando para responder. Se nada mudar, busque de novo ou use o favorito abaixo.',
+  timeout: 'O Google está demorando para responder. Se nada mudar, busque de novo ou use o favorito (aba Extensão PAA).',
 };
 // Sem notícia da extensão por esse tempo, avisa (mas continua aceitando a resposta, se ela chegar).
 const PAA_SILENCE = 30000;
@@ -515,6 +558,7 @@ async function search(kw, hl, gl, paa = null) {
   startResults(kw, hl, gl);
   Object.assign(state, { paa, paaWait: null, paaError: null });
   if (!paa && hasExt()) requestPaa(kw, hl, gl);
+  if (paa) showPaa(); // PAA já coletado (bookmarklet): mostra mesmo se o autocomplete falhar
   renderPaa();
   const prog = {};
   const tick = () => {
@@ -522,14 +566,42 @@ async function search(kw, hl, gl, paa = null) {
     setStatus(`Consultando Google e Google Shopping… ${d}/${n}`, n ? d / n : 0);
   };
   tick();
+  // Um espaço por fonte, na ordem de SITE_SOURCES: cada uma mostra o próprio progresso e vira painel ao terminar.
+  const slots = Object.fromEntries(SITE_SOURCES.map((src) => {
+    const el = $('#panels').appendChild(document.createElement('section'));
+    el.className = 'panel pending';
+    el.innerHTML = `<div class="res-head"><h2>${esc(srcLabel(src))} <small>consultando…</small></h2></div>`;
+    return [src, el];
+  }));
+  const slotNote = (src, text) => (slots[src].querySelector('small').textContent = text);
   try {
-    const runs = await Promise.all(SITE_SOURCES.map((src) => collect(kw, hl, gl, src, (d, n) => { prog[src] = [d, n]; tick(); })));
+    const runs = await Promise.all(SITE_SOURCES.map((src) => collect(kw, hl, gl, src, (d, n) => {
+      prog[src] = [d, n];
+      slotNote(src, `consultando ${d}/${n}`);
+      tick();
+    }).then((r) => {
+      if (r.failed === r.total) slotNote(src, 'não respondeu');
+      else {
+        addPanel(r.data, slots[src]);
+        showPaa();
+        $('#share').hidden = false;
+      }
+      return r;
+    })));
     const failed = runs.reduce((s, r) => s + r.failed, 0), total = runs.reduce((s, r) => s + r.total, 0);
-    if (failed === total) return setStatus('O Google não respondeu. Um bloqueador de anúncios ou a rede pode estar impedindo as consultas.', 0);
+    // painéis chegam na ordem em que terminam: volta para a ordem de SITE_SOURCES (cores e lista estáveis)
+    state.panels.sort((a, b) => SITE_SOURCES.indexOf(a.data.src) - SITE_SOURCES.indexOf(b.data.src));
+    renderOverview();
+    renderList();
+    if (failed === total) {
+      $('#panels').replaceChildren();
+      if (state.paa || state.paaWait) showPaa();
+      return setStatus('O Google não respondeu. Um bloqueador de anúncios ou a rede pode estar impedindo as consultas.', 0);
+    }
     setStatus(failed ? `Pronto. ${failed} de ${total} consultas falharam.` : 'Pronto.', 1);
-    runs.forEach((r) => addPanel(r.data));
     history.replaceState(null, '', `?${new URLSearchParams({ q: kw, hl, gl })}`);
   } catch {
+    document.querySelectorAll('#panels .pending').forEach((el) => el.remove());
     setStatus('Algo deu errado na busca. Recarregue a página e tente de novo.', 0);
   } finally {
     $('#go').disabled = false;
@@ -566,13 +638,13 @@ function download(name, text, type) {
 
 async function copy(text, btn, done = 'Copiado') {
   try { await navigator.clipboard.writeText(text); } catch { return; }
-  const old = btn.textContent;
-  btn.textContent = done;
-  setTimeout(() => (btn.textContent = old), 1200);
+  const old = btn.innerHTML;
+  btn.innerHTML = done;
+  setTimeout(() => (btn.innerHTML = old), 1200);
 }
 
 function selectTab(name) {
-  document.querySelectorAll('.tabs button').forEach((b) => b.setAttribute('aria-selected', b.dataset.tab === name));
+  document.querySelectorAll('.tabs button').forEach((b) => (b.dataset.tab === name ? b.setAttribute('aria-current', 'page') : b.removeAttribute('aria-current')));
   document.querySelectorAll('.tab').forEach((s) => (s.hidden = s.id !== `tab-${name}`));
   // drawMap mede o texto: desenhado com a aba escondida, as larguras saem 0. Redesenha ao voltar.
   if (name === 'search' && state.paa) drawMap($('#paa-map'), state.paa);
@@ -598,7 +670,7 @@ async function setupBookmarklet() {
     const code = (await fetch('paa.js').then((r) => r.text())).replace('__SITE__', () => siteUrl());
     $('#paa-bm').href = 'javascript:' + encodeURIComponent(code);
   } catch { $('#paa-bm').replaceWith('(indisponível nesta cópia offline)'); }
-  $('#paa-bm')?.addEventListener('click', (e) => { e.preventDefault(); setStatus('Arraste o botão AskWheel PAA para a barra de favoritos em vez de clicar nele.', 0); });
+  $('#paa-bm')?.addEventListener('click', (e) => { e.preventDefault(); $('#bm-msg').textContent = 'Arraste o botão para a barra de favoritos em vez de clicar nele.'; });
 }
 
 // Dados que o bookmarklet traz do Google em #paa=. Vêm de fora: só passam se tiverem a forma esperada.
@@ -646,19 +718,23 @@ function init() {
   $('#form').addEventListener('submit', (e) => {
     e.preventDefault();
     const kw = $('#q').value.trim();
-    if (kw) search(kw, $('#hl').value, $('#gl').value);
+    if (!kw) return;
+    selectTab('search');
+    search(kw, $('#hl').value, $('#gl').value);
   });
   $('#paa-csv').addEventListener('click', () => download(`askwheel-paa-${state.keyword}.csv`, paaCsv(state.paa), 'text/csv'));
   $('#share').addEventListener('click', (e) => {
     const { keyword: q, hl, gl } = state;
     copy(`${location.origin}${location.pathname}?${new URLSearchParams({ q, hl, gl })}`, e.target);
   });
-  document.addEventListener('click', (e) => { const b = e.target.closest('button.plus'); if (b) copy(b.dataset.text, b, '✓'); });
+  document.addEventListener('click', (e) => { const b = e.target.closest('button.plus'); if (b) copy(b.dataset.text, b, ICON_DONE); });
   $('#list-groups').addEventListener('click', (e) => {
     const b = e.target.closest('button');
     if (b) { state.listGroup = b.dataset.lgroup || null; renderList(); }
   });
   $('#list-q').addEventListener('input', renderList);
+  // tooltip da roda aberto por toque: some ao rolar a página
+  addEventListener('scroll', () => { const t = $('#tip'); if (t) t.hidden = true; }, { passive: true });
   document.querySelectorAll('.copy').forEach((b) => b.addEventListener('click', () => copy($(`#${b.dataset.copy}`).textContent, b)));
 
   const paa = readPaaHash();
