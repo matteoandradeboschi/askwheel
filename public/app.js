@@ -9,7 +9,7 @@ const first = (d) => d?.[1];
 const SOURCES = {
   google: { label: 'Google', url: goog(''), parse: first, open: 'https://www.google.com/search?q=' },
   youtube: { label: 'YouTube', url: goog('&ds=yt'), parse: first, open: 'https://www.youtube.com/results?search_query=' },
-  shopping: { label: 'Google Shopping', url: goog('&ds=sh'), parse: first, open: 'https://www.google.com/search?tbm=shop&q=' },
+  shopping: { label: 'Google Shopping', url: goog('&ds=sh'), parse: first, open: 'https://www.google.com/search?udm=28&q=' },
   bing: {
     label: 'Bing',
     url: (q, hl, gl, cb) => `https://api.bing.com/qsonhs.aspx?type=cb&cb=${cb}&mkt=${hl}-${gl.toUpperCase()}&q=${encodeURIComponent(q)}`,
