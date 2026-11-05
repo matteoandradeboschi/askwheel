@@ -104,8 +104,12 @@ function assemble(kw, plan, results, meta) {
   return { keyword: kw, ...meta, collected_at: new Date().toISOString(), source: `${meta.src}-autocomplete`, groups };
 }
 
+// modifiers.json é buscado uma vez só (as fontes e as buscas seguintes reusam a mesma promessa).
+let modifiers;
+const loadModifiers = () => (modifiers ??= fetch('modifiers.json').then((r) => r.json()).catch((e) => { modifiers = null; throw e; }));
+
 async function collect(kw, hl, gl, src, onProgress) {
-  const all = window.__WHEEL_MODIFIERS__ || (await fetch('modifiers.json').then((r) => r.json()));
+  const all = window.__WHEEL_MODIFIERS__ || (await loadModifiers());
   const plan = buildPlan(kw, all[hl] || all.en);
   const results = new Array(plan.length);
   let next = 0, done = 0, failed = 0;
