@@ -1,5 +1,5 @@
 // AskWheel: uma busca mostra tudo: roda do Google, roda do Google Shopping (autocomplete via JSONP, direto do navegador)
-// e o mapa do People Also Ask (coletado no Google pelo bookmarklet paa.js).
+// e o mapa do People Also Ask (coletado no Google pela extensão AskWheel PAA, em extension/, ou pelo bookmarklet paa.js).
 // Também renderiza dados pré-carregados (window.__WHEEL_DATA__), usado pelo HTML gerado pela skill.
 
 const ENDPOINT = 'https://suggestqueries.google.com/complete/search';
@@ -43,7 +43,8 @@ const hasToken = (text, tok) => ` ${norm(text)} `.includes(` ${norm(tok)} `);
 const hasKeyword = (text, kw) => norm(kw).split(' ').every((t) => norm(text).includes(t));
 
 // panels: uma roda por fonte ({ data, group, view, el }); paa: árvore do People Also Ask.
-let state = { keyword: '', hl: '', gl: '', panels: [], paa: null, listGroup: null };
+// paaWait: id do pedido em curso à extensão; paaProg: andamento dele; paaError: motivo da última falha.
+let state = { keyword: '', hl: '', gl: '', panels: [], paa: null, paaWait: null, paaProg: null, paaError: null, listGroup: null };
 
 // ---------- coleta ----------
 
@@ -416,6 +417,16 @@ function renderPaa() {
   $('#paa-open').href = `https://www.google.com/search?${new URLSearchParams({ q: kw, hl, gl })}`;
   $('#paa-open').textContent = `Abrir “${kw}” no Google`;
   $('#paa-help').hidden = !!paa;
+  const ext = hasExt();
+  const pr = state.paaProg;
+  $('#paa-prog').hidden = !state.paaWait || !!state.paaError;
+  $('#paa-prog span').textContent = pr ? `Lendo o People Also Ask no Google… ${pr.found} perguntas` : 'Abrindo o Google…';
+  $('#paa-prog i').style.width = `${pr ? Math.round((pr.done / pr.total) * 100) : 0}%`;
+  $('#paa-msg').textContent = PAA_ERRORS[state.paaError] || '';
+  $('#paa-msg').hidden = !$('#paa-msg').textContent;
+  $('#paa-install').hidden = ext;
+  $('#paa-manual').hidden = ext && !state.paaError;
+  $('#paa-manual').open = !ext || !!state.paaError;
   $('#paa-map').hidden = !paa;
   $('#paa-csv').hidden = !paa;
   $('#paa-count').textContent = paa ? `${countTree(paa)} perguntas` : '';
@@ -439,11 +450,59 @@ function setStatus(text, frac) {
   $('#status i').style.width = `${Math.round((frac ?? 0) * 100)}%`;
 }
 
-// Consulta Google e Google Shopping ao mesmo tempo; o PAA vem do bookmarklet (paa mantém o que já foi coletado).
+// ---------- People Also Ask pela extensão ----------
+// A extensão (extension/site.js) marca o <html> com data-askwheel-ext e atende pedidos por postMessage.
+const hasExt = () => !!document.documentElement.dataset.askwheelExt;
+// Erros em que a aba do Google fica aberta para o usuário resolver: o pedido continua valendo.
+const PAA_PENDING = ['captcha', 'blocked', 'timeout'];
+const PAA_ERRORS = {
+  empty: 'O Google não mostrou a caixa “As pessoas também perguntam” para esta busca.',
+  captcha: 'O Google pediu uma verificação. Resolva na aba que abriu: a coleta continua sozinha.',
+  blocked: 'O Google abriu uma tela intermediária (cookies ou login). Resolva na aba que abriu: a coleta continua sozinha.',
+  timeout: 'O Google está demorando para responder. Se nada mudar, busque de novo ou use o favorito abaixo.',
+};
+// Sem notícia da extensão por esse tempo, avisa (mas continua aceitando a resposta, se ela chegar).
+const PAA_SILENCE = 30000;
+let paaTimer;
+function armPaaTimer(id) {
+  clearTimeout(paaTimer);
+  paaTimer = setTimeout(() => {
+    if (state.paaWait !== id || state.paaError) return;
+    state.paaError = 'timeout';
+    renderPaa();
+  }, PAA_SILENCE);
+}
+
+function requestPaa(kw, hl, gl) {
+  const id = Math.random().toString(36).slice(2);
+  Object.assign(state, { paaWait: id, paaProg: null, paaError: null });
+  window.postMessage({ type: 'askwheel:paa', id, q: kw, hl, gl }, location.origin);
+  armPaaTimer(id);
+}
+
+window.addEventListener('message', (e) => {
+  const m = e.data;
+  if (e.source !== window || m?.id !== state.paaWait) return;
+  armPaaTimer(m.id);
+  if (m.type === 'askwheel:paa-progress') {
+    if (state.paaError === 'timeout') state.paaError = null;
+    state.paaProg = { done: Number(m.done) || 0, total: Number(m.total) || 1, found: Number(m.found) || 0 };
+    return renderPaa();
+  }
+  if (m.type !== 'askwheel:paa-result') return;
+  const paa = m.data && cleanPaa(m.data);
+  if (paa) Object.assign(state, { paa: paa.tree, paaError: null });
+  else state.paaError = m.error || 'empty';
+  if (!PAA_PENDING.includes(state.paaError)) state.paaWait = null;
+  renderPaa();
+});
+
+// Consulta Google e Google Shopping ao mesmo tempo; o PAA vem da extensão ou do bookmarklet (paa mantém o que já foi coletado).
 async function search(kw, hl, gl, paa = null) {
   $('#go').disabled = true;
   startResults(kw, hl, gl);
-  state.paa = paa;
+  Object.assign(state, { paa, paaWait: null, paaError: null });
+  if (!paa && hasExt()) requestPaa(kw, hl, gl);
   renderPaa();
   const prog = {};
   const tick = () => {
@@ -519,15 +578,17 @@ function readPaaHash() {
   if (!location.hash.startsWith('#paa=')) return null;
   const raw = location.hash.slice(5);
   history.replaceState(null, '', location.pathname);
-  try {
-    const d = JSON.parse(decodeURIComponent(raw));
-    if (typeof d?.keyword !== 'string' || !Array.isArray(d.tree?.children)) return null;
-    const clean = (n, depth) => ({
-      name: String(n.name).slice(0, 300),
-      children: depth < 6 && Array.isArray(n.children) ? n.children.filter((c) => typeof c?.name === 'string').slice(0, 50).map((c) => clean(c, depth + 1)) : [],
-    });
-    return { keyword: d.keyword, hl: String(d.hl || ''), gl: String(d.gl || ''), tree: clean({ name: d.keyword, children: d.tree.children }, 0) };
-  } catch { return null; }
+  try { return cleanPaa(JSON.parse(decodeURIComponent(raw))); } catch { return null; }
+}
+
+// PAA vindo do bookmarklet ou da extensão: { keyword, hl, gl, tree }.
+function cleanPaa(d) {
+  if (typeof d?.keyword !== 'string' || !Array.isArray(d.tree?.children)) return null;
+  const clean = (n, depth) => ({
+    name: String(n.name).slice(0, 300),
+    children: depth < 6 && Array.isArray(n.children) ? n.children.filter((c) => typeof c?.name === 'string').slice(0, 50).map((c) => clean(c, depth + 1)) : [],
+  });
+  return { keyword: d.keyword, hl: String(d.hl || ''), gl: String(d.gl || ''), tree: clean({ name: d.keyword, children: d.tree.children }, 0) };
 }
 
 function defaults() {
@@ -549,6 +610,7 @@ function init() {
   setupBookmarklet();
 
   document.querySelectorAll('.tabs button').forEach((b) => b.addEventListener('click', () => selectTab(b.dataset.tab)));
+  document.querySelectorAll('[data-goto]').forEach((a) => a.addEventListener('click', (e) => { e.preventDefault(); selectTab(a.dataset.goto); scrollTo(0, 0); }));
   $('#form').addEventListener('submit', (e) => {
     e.preventDefault();
     const kw = $('#q').value.trim();

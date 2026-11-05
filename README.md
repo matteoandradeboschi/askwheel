@@ -1,10 +1,11 @@
 # AskWheel
 
-Alternativa grátis de *search listening*: digite uma palavra-chave e veja, numa busca só, perguntas, preposições, comparações, a–z, 0–9 e buscas relacionadas do autocomplete do Google e do Google Shopping (roda + tabela) e o mapa do People Also Ask do Google. Site estático, sem backend: as consultas vão do navegador do visitante direto para a fonte (JSONP). O People Also Ask é coletado por um favorito (bookmarklet) que roda na própria página de resultados do Google.
+Alternativa grátis de *search listening*: digite uma palavra-chave e veja, numa busca só, perguntas, preposições, comparações, a–z, 0–9 e buscas relacionadas do autocomplete do Google e do Google Shopping (roda + tabela) e o mapa do People Also Ask do Google. Site estático, sem backend: as consultas vão do navegador do visitante direto para a fonte (JSONP). O People Also Ask é coletado pela extensão [AskWheel PAA](extension/) (automático) ou por um favorito (bookmarklet), na própria página de resultados do Google.
 
 ## Estrutura
 
 ```
+extension/              # extensão do navegador que traz o PAA sozinho (vai para o site como public/askwheel-paa.zip)
 public/                 # tudo que vai para o Cloudflare Pages
   index.html style.css app.js
   paa.js                # bookmarklet do People Also Ask
