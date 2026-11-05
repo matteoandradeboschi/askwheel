@@ -469,7 +469,18 @@ function renderPaa() {
   $('#paa-map').hidden = !paa;
   $('#paa-csv').hidden = !paa;
   $('#paa-count').textContent = paa ? `${countTree(paa)} perguntas` : '';
-  if (paa) drawMap($('#paa-map'), paa);
+  // drawMap mede o texto: com #paa escondido as larguras saem 0. showPaa redesenha ao mostrar.
+  if (paa && !$('#paa').hidden) drawMap($('#paa-map'), paa);
+  if (state.keyword) {
+    $('#paa-open').href = `https://www.google.com/search?${new URLSearchParams({ q: state.keyword, hl: state.hl, gl: state.gl })}`;
+    $('#paa-open').textContent = `abrir “${state.keyword}” no Google`;
+  }
+}
+
+function showPaa() {
+  if (!$('#paa').hidden) return;
+  $('#paa').hidden = false;
+  if (state.paa) drawMap($('#paa-map'), state.paa);
 }
 
 function startResults(kw, hl, gl) {
@@ -547,6 +558,7 @@ async function search(kw, hl, gl, paa = null) {
   startResults(kw, hl, gl);
   Object.assign(state, { paa, paaWait: null, paaError: null });
   if (!paa && hasExt()) requestPaa(kw, hl, gl);
+  if (paa) showPaa(); // PAA já coletado (bookmarklet): mostra mesmo se o autocomplete falhar
   renderPaa();
   const prog = {};
   const tick = () => {
@@ -571,18 +583,25 @@ async function search(kw, hl, gl, paa = null) {
       if (r.failed === r.total) slotNote(src, 'não respondeu');
       else {
         addPanel(r.data, slots[src]);
-        $('#paa').hidden = $('#share').hidden = false;
+        showPaa();
+        $('#share').hidden = false;
       }
       return r;
     })));
     const failed = runs.reduce((s, r) => s + r.failed, 0), total = runs.reduce((s, r) => s + r.total, 0);
+    // painéis chegam na ordem em que terminam: volta para a ordem de SITE_SOURCES (cores e lista estáveis)
+    state.panels.sort((a, b) => SITE_SOURCES.indexOf(a.data.src) - SITE_SOURCES.indexOf(b.data.src));
+    renderOverview();
+    renderList();
     if (failed === total) {
       $('#panels').replaceChildren();
+      if (state.paa || state.paaWait) showPaa();
       return setStatus('O Google não respondeu. Um bloqueador de anúncios ou a rede pode estar impedindo as consultas.', 0);
     }
     setStatus(failed ? `Pronto. ${failed} de ${total} consultas falharam.` : 'Pronto.', 1);
     history.replaceState(null, '', `?${new URLSearchParams({ q: kw, hl, gl })}`);
   } catch {
+    document.querySelectorAll('#panels .pending').forEach((el) => el.remove());
     setStatus('Algo deu errado na busca. Recarregue a página e tente de novo.', 0);
   } finally {
     $('#go').disabled = false;
