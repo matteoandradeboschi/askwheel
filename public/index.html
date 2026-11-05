@@ -32,7 +32,6 @@
   </form>
   <nav class="tabs" data-i18n-label="nav.label" aria-label="Páginas">
     <button data-tab="ext" class="desk" data-i18n="nav.ext">Extensão PAA</button>
-    <button data-tab="skill" class="desk" data-i18n="nav.skill">Skill p/ Claude Code</button>
     <button data-tab="about" data-i18n="nav.about">Como funciona</button>
     <select id="ui-lang" data-i18n-label="ui.label" aria-label="Idioma do site">
       <option value="pt">PT</option>
@@ -63,7 +62,7 @@
       <section id="paa" class="panel">
         <div id="paa-head" class="res-head">
           <h2>People Also Ask <small id="paa-count"></small></h2>
-          <div class="actions"><button data-i18n="csv" id="paa-csv" class="ghost" hidden>Baixar CSV</button></div>
+          <div class="actions"><button id="paa-svg" class="ghost" hidden>SVG</button><button id="paa-png" class="ghost" hidden>PNG</button><button data-i18n="csv" id="paa-csv" class="ghost" hidden>Baixar CSV</button></div>
         </div>
         <div id="paa-help" class="paa-help">
           <div id="paa-prog" class="status" hidden><div class="bar"><i></i></div><span></span></div>
@@ -111,23 +110,6 @@
     </ol>
   </section>
 
-  <section id="tab-skill" class="tab prose" hidden>
-    <h1 data-i18n="skill.h">Skill para Claude Code</h1>
-    <p data-i18n="skill.p">Opcional. O site cobre a coleta e a visualização. A skill faz o mesmo dentro do <a href="https://claude.com/claude-code" target="_blank" rel="noopener">Claude Code</a> e acrescenta o que o site não faz:</p>
-    <ul>
-      <li data-i18n="skill.l1">Agrupa as sugestões por <b>intenção</b> (informacional, comercial, transacional, navegacional).</li>
-      <li data-i18n="skill.l2">Junta as sugestões em <b>clusters de tópicos</b>.</li>
-      <li data-i18n="skill.l3">Sugere <b>pautas de conteúdo</b> (títulos e palavras-chave-alvo) e as <b>perguntas prioritárias</b> para responder.</li>
-      <li data-i18n="skill.l4">Gera um HTML único, offline, com este mesmo relatório e uma aba extra <b>Extras (Claude)</b>.</li>
-    </ul>
-    <h2 data-i18n="skill.installH">Instalar</h2>
-    <p data-i18n="skill.installP">Cole no terminal (Linux/macOS). Baixa os arquivos da skill e do site para <code>~/.claude/skills/askwheel</code>. É código que o Claude Code vai executar no seu computador: se quiser, confira antes os arquivos listados abaixo.</p>
-    <div class="code"><pre id="install-cmd"></pre><button class="ghost copy" data-copy="install-cmd" data-i18n="copy">Copiar</button></div>
-    <p data-i18n="skill.then">Depois, no Claude Code:</p>
-    <div class="code"><pre id="usage-cmd">/askwheel caffè --hl it --gl it</pre><button class="ghost copy" data-copy="usage-cmd" data-i18n="copy">Copiar</button></div>
-    <p class="muted"><span data-i18n="skill.req">Requisitos: Python 3 (só a biblioteca padrão, nada para instalar). Para atualizar, rode o comando de instalação de novo. Arquivos:</span> <a href="skill/SKILL.md" target="_blank">SKILL.md</a>, <a href="skill/collect.py" target="_blank">collect.py</a>, <a href="skill/render.py" target="_blank">render.py</a>.</p>
-  </section>
-
   <section id="tab-about" class="tab prose" hidden>
     <h1 data-i18n="about.h">Como funciona</h1>
     <ol>
@@ -143,13 +125,12 @@
       <li data-i18n="about.lim3">Os resultados variam por idioma, país e momento.</li>
       <li data-i18n="about.lim4">Francês e alemão ainda não têm modificadores: para França e Alemanha, escolha o idioma English (outros idiomas usam os modificadores em inglês).</li>
       <li data-i18n="about.lim5">Bloqueadores de anúncio podem impedir as consultas.</li>
-      <li data-i18n="about.lim6">Amazon, TikTok e Google Trends não estão aqui: bloqueiam consultas do navegador (CORS). Existem só na skill para Claude Code.</li>
+      <li data-i18n="about.lim6">Amazon, TikTok e Google Trends não estão aqui: bloqueiam consultas do navegador (CORS).</li>
       <li data-i18n="about.lim7">Instagram exige login.</li>
       <li data-i18n="about.lim8">People Also Ask só existe na página de resultados do Google: a coleta roda lá, pela extensão ou pelo favorito <b>AskWheel PAA</b>. Precisa de computador e só funciona quando o Google mostra a caixa.</li>
     </ul>
     <h2 data-i18n="about.privH">Privacidade</h2>
     <p data-i18n="about.privP">O site é estático: não tem servidor, cadastro nem analytics. As consultas vão do seu navegador direto para o Google.</p>
-    <p data-i18n="about.inspired" class="muted">Inspirado em ferramentas de <i>search listening</i> como o AnswerThePublic. Sem afiliação.</p>
   </section>
 </main>
 
