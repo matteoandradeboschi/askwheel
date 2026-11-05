@@ -13,7 +13,8 @@ SITE = Path(__file__).resolve().parent / "site"
 
 
 def safe_json(obj):
-    return json.dumps(obj, ensure_ascii=False).replace("</", "<\\/")
+    # Todo "<" vira \u003c (válido em string JSON): nem </script nem <!-- quebram o <script>.
+    return json.dumps(obj, ensure_ascii=False).replace("<", "\\u003c")
 
 
 def main():
