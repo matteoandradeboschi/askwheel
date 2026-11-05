@@ -555,6 +555,8 @@ async function copy(text, btn, done = 'Copiado') {
 function selectTab(name) {
   document.querySelectorAll('.tabs button').forEach((b) => b.setAttribute('aria-selected', b.dataset.tab === name));
   document.querySelectorAll('.tab').forEach((s) => (s.hidden = s.id !== `tab-${name}`));
+  // drawMap mede o texto: desenhado com a aba escondida, as larguras saem 0. Redesenha ao voltar.
+  if (name === 'search' && state.paa) drawMap($('#paa-map'), state.paa);
 }
 
 const siteUrl = () => (/^https?:/.test(location.protocol) ? location.origin + location.pathname.replace(/[^/]*$/, '') : 'https://SEU-SITE.pages.dev/');
