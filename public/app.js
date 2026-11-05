@@ -522,6 +522,8 @@ async function search(kw, hl, gl, paa = null) {
     setStatus(failed ? `Pronto. ${failed} de ${total} consultas falharam.` : 'Pronto.', 1);
     runs.forEach((r) => addPanel(r.data));
     history.replaceState(null, '', `?${new URLSearchParams({ q: kw, hl, gl })}`);
+  } catch {
+    setStatus('Algo deu errado na busca. Recarregue a página e tente de novo.', 0);
   } finally {
     $('#go').disabled = false;
   }
