@@ -609,7 +609,9 @@ function cleanPaa(d) {
     name: String(n.name).slice(0, 300),
     children: depth < 6 && Array.isArray(n.children) ? n.children.filter((c) => typeof c?.name === 'string').slice(0, 50).map((c) => clean(c, depth + 1)) : [],
   });
-  return { keyword: d.keyword, hl: String(d.hl || ''), gl: String(d.gl || ''), tree: clean({ name: d.keyword, children: d.tree.children }, 0) };
+  // keyword limitada: um link #paa= de qualquer lugar dispara a busca completa com ela.
+  const kw = d.keyword.slice(0, 200);
+  return { keyword: kw, hl: String(d.hl || ''), gl: String(d.gl || ''), tree: clean({ name: kw, children: d.tree.children }, 0) };
 }
 
 function defaults() {
