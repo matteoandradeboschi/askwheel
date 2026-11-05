@@ -564,17 +564,20 @@ function selectTab(name) {
   if (name === 'search' && state.paa) drawMap($('#paa-map'), state.paa);
 }
 
-const siteUrl = () => (/^https?:/.test(location.protocol) ? location.origin + location.pathname.replace(/[^/]*$/, '') : 'https://SEU-SITE.pages.dev/');
+// Só a origem: o pathname vem da URL e iria cru para o comando shell e para o bookmarklet.
+const siteUrl = () => (/^https?:/.test(location.protocol) ? location.origin + '/' : 'https://SEU-SITE.pages.dev/');
 
 function installCommand() {
   const origin = siteUrl();
-  return `d=~/.claude/skills/askwheel; mkdir -p "$d/site" && for f in SKILL.md collect.py render.py; do curl -fsSL ${origin}skill/$f -o "$d/$f"; done && for f in index.html app.js style.css modifiers.json; do curl -fsSL ${origin}$f -o "$d/site/$f"; done && echo "AskWheel skill instalada em $d"`;
+  // Um curl só, com --fail-early: qualquer arquivo que falhe impede o "instalada".
+  const files = [...['SKILL.md', 'collect.py', 'render.py'].map((f) => [`skill/${f}`, f]), ...['index.html', 'app.js', 'style.css', 'modifiers.json'].map((f) => [f, `site/${f}`])];
+  return `d=~/.claude/skills/askwheel; mkdir -p "$d/site" && curl -fsSL --fail-early ${files.map(([url, out]) => `-o "$d/${out}" ${origin}${url}`).join(' ')} && echo "AskWheel skill instalada em $d"`;
 }
 
 // O código do bookmarklet fica legível em paa.js; aqui vira um link javascript: com o endereço do site.
 async function setupBookmarklet() {
   try {
-    const code = (await fetch('paa.js').then((r) => r.text())).replace('__SITE__', siteUrl());
+    const code = (await fetch('paa.js').then((r) => r.text())).replace('__SITE__', () => siteUrl());
     $('#paa-bm').href = 'javascript:' + encodeURIComponent(code);
   } catch { $('#paa-bm').replaceWith('(indisponível nesta cópia offline)'); }
   $('#paa-bm')?.addEventListener('click', (e) => { e.preventDefault(); setStatus('Arraste o botão AskWheel PAA para a barra de favoritos em vez de clicar nele.', 0); });
