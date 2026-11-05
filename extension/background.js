@@ -50,7 +50,8 @@ function readPaa(job) {
   const MAX_CLICKS = 20;
   const DEADLINE = Date.now() + 45000;
   const done = (res) => chrome.runtime.sendMessage({ type: 'paa-done', job, ...res });
-  const progress = (n, found) => chrome.runtime.sendMessage({ type: 'paa-progress', job, done: n, total: MAX_CLICKS, found });
+  // total = cliques feitos + perguntas na fila (até MAX_CLICKS): a barra chega a 100% quando a fila acaba.
+  const progress = (n, left, found) => chrome.runtime.sendMessage({ type: 'paa-progress', job, done: n, total: Math.min(MAX_CLICKS, n + left), found });
   const url = new URL(location.href);
   if (url.pathname.startsWith('/sorry')) return done({ error: 'captcha' });
   const pairs = () => [...document.querySelectorAll('.related-question-pair[data-q]')];
@@ -69,7 +70,7 @@ function readPaa(job) {
     const children = new Map(roots.map((q) => [q, []]));
     const queue = [...roots];
     let clicks = 0;
-    progress(0, children.size);
+    progress(0, queue.length, children.size);
     // Prazo total: aba em segundo plano pode ficar lenta; devolve o que já leu em vez de sumir.
     while (queue.length && clicks < MAX_CLICKS && Date.now() < DEADLINE) {
       const q = queue.shift();
@@ -86,7 +87,7 @@ function readPaa(job) {
         children.get(q).push(nq);
         queue.push(nq);
       }
-      progress(clicks, children.size);
+      progress(clicks, queue.length, children.size);
       await sleep(300);
     }
     const kw = url.searchParams.get('q');
