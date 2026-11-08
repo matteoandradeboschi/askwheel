@@ -20,7 +20,7 @@ public/                 # the site (static, deployed as-is)
   paa.js                # People Also Ask bookmarklet
   modifiers.json        # modifiers per language
 linux.askwheel.desktop  # linux localhost shortcut
-macos.askwheel.webloc   # macos lohalhost shortcut
+macos.askwheel.webloc   # macos localhost shortcut
 windows.askwheel.url    # windows localhost shortcut
 ```
 
