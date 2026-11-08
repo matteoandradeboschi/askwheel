@@ -22,3 +22,10 @@ askwheel-*.html
 
 # Impeccable (histórico local de critiques)
 .impeccable/
+
+# Skill local (não publicar)
+skill/
+docs/
+LACUNAS.md
+CLAUDE.md
+.claude/
