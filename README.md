@@ -43,16 +43,7 @@ Open http://localhost:5173. (Opening `index.html` directly via `file://` doesn't
 
 ## Development
 
-This is a personal project, built and maintained by one person. It is not open to contributions: pull requests and feature requests may be ignored or closed without review.
-
-Notes for the maintainer:
-
-- Workflow: GitHub Flow (branch `type/short-desc` → PR → squash merge, Conventional Commits). Enable the local hook once per clone: `git config core.hooksPath .githooks`.
-- Checks: `node --check public/app.js` and a manual search on the local server.
-- No build step, no npm dependencies. D3 is loaded from cdnjs, pinned with SRI.
-- UI strings live in `public/i18n.js`: add each one in `pt`, `en` and `it`.
-- A new external script host must be added to `script-src` in `public/_headers` (CSP).
-- After changing `extension/`, regenerate the zip: `cd extension && zip -qr ../public/askwheel-paa.zip manifest.json background.js site.js`.
+AskWheel is built and maintained by one person.
 
 ## Privacy
 
