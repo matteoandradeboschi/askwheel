@@ -39,11 +39,7 @@ Open http://localhost:5173. (Opening `index.html` directly via `file://` doesn't
 - **Modifiers exist for pt, it, en, es only.** French and German searches fall back to the English modifiers.
 - **Ad blockers** can block the JSONP queries.
 - **Public-IP rate limits.** Queries come from each visitor's IP; heavy use may trigger Google's temporary throttling or captcha.
-- **No automated tests or CI.** Checks are manual (see Contributing).
-
-## Development
-
-AskWheel is built and maintained by one person.
+- **No automated tests or CI.** Checks are manual.
 
 ## Privacy
 
