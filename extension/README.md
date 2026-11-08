@@ -31,7 +31,7 @@ Then reload AskWheel and search: the question map shows up in about 20 seconds.
 
 ## Local development
 
-The distributed `manifest.json` only matches `askwheel.pages.dev` (and the `*.askwheel.pages.dev` previews): with `localhost` in `matches`, any app running on the machine could request Google tabs with your session. To test with `python3 -m http.server 5173 --directory public`, add by hand, only in your local copy, to `content_scripts.matches`:
+The distributed `manifest.json` only matches `askwheel.askwheel.workers.dev`: with `localhost` in `matches`, any app running on the machine could request Google tabs with your session. To test with `python3 -m http.server 5173 --directory public`, add by hand, only in your local copy, to `content_scripts.matches`:
 
 ```json
 "http://localhost/*", "http://127.0.0.1/*"

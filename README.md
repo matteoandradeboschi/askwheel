@@ -2,7 +2,7 @@
 
 Free *search listening* alternative: type a keyword and, in a single search, see questions, prepositions, comparisons, a–z, 0–9 and related searches from Google and Google Shopping autocomplete (wheel + table), plus the Google People Also Ask map. Static site, no backend: queries go from the visitor's browser straight to the source (JSONP). People Also Ask is collected by the [AskWheel PAA](extension/) extension (automatic) or by a bookmarklet, on the Google results page itself.
 
-**Live site:** https://askwheel.pages.dev
+**Live site:** https://askwheel.askwheel.workers.dev
 
 ## Features
 
@@ -41,10 +41,14 @@ Open http://localhost:5173. (Opening `index.html` directly via `file://` doesn't
 - **Public-IP rate limits.** Queries come from each visitor's IP; heavy use may trigger Google's temporary throttling or captcha.
 - **No automated tests or CI.** Checks are manual (see Contributing).
 
-## Contributing
+## Development
 
-Small solo project, GitHub Flow: branch (`type/short-desc`) → PR → squash merge, Conventional Commits. Enable the local hook once per clone: `git config core.hooksPath .githooks`. Before a PR: `node --check public/app.js` and a manual search on the local server. Rules to keep in mind:
+This is a personal project, built and maintained by one person. It is not open to contributions: pull requests and feature requests may be ignored or closed without review.
 
+Notes for the maintainer:
+
+- Workflow: GitHub Flow (branch `type/short-desc` → PR → squash merge, Conventional Commits). Enable the local hook once per clone: `git config core.hooksPath .githooks`.
+- Checks: `node --check public/app.js` and a manual search on the local server.
 - No build step, no npm dependencies. D3 is loaded from cdnjs, pinned with SRI.
 - UI strings live in `public/i18n.js`: add each one in `pt`, `en` and `it`.
 - A new external script host must be added to `script-src` in `public/_headers` (CSP).
