@@ -1,31 +1,44 @@
-# AskWheel PAA (extensão)
+# AskWheel PAA (extension)
 
-Traz o People Also Ask do Google para o AskWheel sozinho: a cada busca no site, a extensão abre a busca no Google numa aba em segundo plano, abre as perguntas, devolve o mapa ao site e fecha a aba. Não guarda nada e não manda dados para nenhum servidor além do Google.
+Brings Google's People Also Ask into AskWheel automatically: on each search on the site, the extension opens the search on Google in a background tab, expands the questions, returns the map to the site and closes the tab. It stores nothing and sends no data to any server other than Google.
 
-Permissões: `www.google.com` (ler o PAA), as páginas do AskWheel (conversar com o site) e `storage` (só `storage.session`, em memória: guarda o id do pedido e da aba do Google enquanto ela está aberta, para a coleta sobreviver ao background dormir).
+Permissions: `scripting` (inject the PAA reader into the Google tab), `www.google.com` (read PAA), the AskWheel pages (talk to the site) and `storage` (only `storage.session`, in memory: keeps the request id and the Google tab id while it is open, so the collection survives the background script going to sleep).
 
-## Instalar (enquanto não está nas lojas)
+## Install (until it is on the stores)
 
-Baixe `askwheel-paa.zip` na aba **Extensão PAA** do site (ou use esta pasta) e descompacte.
+Download `askwheel-paa.zip` from the **Extensão PAA** tab on the site (or use this folder) and unzip it.
 
-- **Chrome, Edge, Brave, Opera, Vivaldi**: abra `chrome://extensions` (no Opera `opera://extensions`), ligue **Modo do desenvolvedor**, clique **Carregar sem compactação** e escolha a pasta `extension/`.
-- **Firefox**: abra `about:debugging#/runtime/this-firefox` → **Carregar extensão temporária** → escolha `extension/manifest.json`. Some ao fechar o Firefox; a instalação permanente vem com a publicação no AMO.
+- **Chrome, Edge, Brave, Opera, Vivaldi**: open `chrome://extensions` (in Opera `opera://extensions`), turn on **Developer mode**, click **Load unpacked** and choose the `extension/` folder.
+- **Firefox** (121+): open `about:debugging#/runtime/this-firefox` → **Load Temporary Add-on** → choose `extension/manifest.json`. It goes away when Firefox closes; permanent install comes with the AMO release.
 
-Depois, recarregue o AskWheel e busque: o mapa de perguntas aparece em uns 20 segundos.
+Then reload AskWheel and search: the question map shows up in about 20 seconds.
 
-## Como funciona
+## How it works
 
-- `site.js`: roda nas páginas do AskWheel, marca `<html data-askwheel-ext>` e repassa pedidos e respostas (`window.postMessage` ↔ background).
-- `background.js`: abre a aba do Google (uma por vez: um pedido novo fecha a anterior) e injeta `readPaa` (mesma lógica do bookmarklet `public/paa.js`; mudanças no DOM do Google afetam os dois).
-- Captcha ou tela de cookies: a aba do Google fica aberta e visível para o usuário resolver; ao voltar para a busca, a coleta continua sozinha (o script é injetado a cada carregamento da aba).
-- Domínios do site em `manifest.json` (`content_scripts.matches`): ajuste se o site mudar de endereço.
+- `site.js`: runs on the AskWheel pages, sets `<html data-askwheel-ext>` and relays requests and responses (`window.postMessage` ↔ background).
+- `background.js`: opens the Google tab (one at a time: a new request closes the previous one) and injects `readPaa` (same logic as the `public/paa.js` bookmarklet; changes in Google's DOM affect both).
+- Captcha or cookie screen: the Google tab stays open and visible for the user to solve; once back on the search, collection continues by itself (the script is injected on every load of the tab).
+- Site domains are in `manifest.json` (`content_scripts.matches`): adjust them if the site moves to another address.
 
-## Desenvolvimento local
+## Limitations
 
-O `manifest.json` distribuído só atende `askwheel.pages.dev` (e os previews `*.askwheel.pages.dev`): com `localhost` nos `matches`, qualquer app rodando na máquina poderia pedir abas do Google com a sua sessão. Para testar com `python3 -m http.server 8000 --directory public`, acrescente à mão, só na sua cópia local, em `content_scripts.matches`:
+- Desktop browsers only (Chrome-family and Firefox); no mobile.
+- Depends on Google's DOM (`.related-question-pair[data-q]`, `[role=button][aria-expanded]`): a layout change can break collection. Google must also show the PAA box for that query.
+- Gives up after about 45 seconds per search.
+- Uses the visitor's own Google session and region, so results can differ from other users'.
+- Only works on the official AskWheel domains listed in `manifest.json`.
+- Not on the Chrome Web Store or AMO yet: manual install; in Firefox it is temporary.
+
+## Local development
+
+The distributed `manifest.json` only matches `askwheel.pages.dev` (and the `*.askwheel.pages.dev` previews): with `localhost` in `matches`, any app running on the machine could request Google tabs with your session. To test with `python3 -m http.server 5173 --directory public`, add by hand, only in your local copy, to `content_scripts.matches`:
 
 ```json
 "http://localhost/*", "http://127.0.0.1/*"
 ```
 
-Recarregue a extensão em `chrome://extensions` (ou `about:debugging`). Não commite essa mudança e não regenere o `public/askwheel-paa.zip` com ela.
+Reload the extension at `chrome://extensions` (or `about:debugging`). Don't commit this change and don't regenerate `public/askwheel-paa.zip` with it.
+
+## License
+
+[MIT](../LICENSE)
