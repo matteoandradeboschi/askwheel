@@ -19,6 +19,9 @@ public/                 # the site (static, deployed as-is)
   index.html style.css i18n.js app.js
   paa.js                # People Also Ask bookmarklet
   modifiers.json        # modifiers per language
+linux.askwheel.desktop  # linux localhost shortcut
+macos.askwheel.webloc   # macos lohalhost shortcut
+windows.askwheel.url    # windows.askwheel.url
 ```
 
 ## Run locally
