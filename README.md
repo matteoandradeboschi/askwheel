@@ -20,21 +20,6 @@ python3 -m http.server 5173 --directory public
 
 Open http://localhost:5173. (Opening `index.html` directly via `file://` doesn't work for searching: `fetch('modifiers.json')` is blocked.)
 
-## Deploy to Cloudflare Pages (free)
-
-No-install option (recommended):
-
-1. Create an account at https://dash.cloudflare.com.
-2. **Workers & Pages → Create → Pages → Upload assets**.
-3. Name the project (it becomes `<name>.pages.dev`) and drag in the `public/` folder.
-4. To update: **Create new deployment** in the same project and drag `public/` in again.
-
-Command-line option (downloads wrangler via npx, no global install):
-
-```bash
-npx wrangler pages deploy public --project-name askwheel
-```
-
 ## Limitations
 
 - No search volume or CPC.
