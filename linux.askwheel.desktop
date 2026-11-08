@@ -1,0 +1,6 @@
+[Desktop Entry]
+Type=Application
+Name=askwheel
+Exec=xdg-open http://localhost:5173/
+Icon=web-browser
+Terminal=false
