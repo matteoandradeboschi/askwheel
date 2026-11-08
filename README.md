@@ -21,7 +21,7 @@ public/                 # the site (static, deployed as-is)
   modifiers.json        # modifiers per language
 linux.askwheel.desktop  # linux localhost shortcut
 macos.askwheel.webloc   # macos lohalhost shortcut
-windows.askwheel.url    # windows.askwheel.url
+windows.askwheel.url    # windows localhost shortcut
 ```
 
 ## Run locally
