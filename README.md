@@ -15,10 +15,10 @@ public/                 # everything that goes to Cloudflare Pages
 ## Run locally
 
 ```bash
-python3 -m http.server 3000 --directory public
+python3 -m http.server 5173 --directory public
 ```
 
-Open http://localhost:3000. (Opening `index.html` directly via `file://` doesn't work for searching: `fetch('modifiers.json')` is blocked.)
+Open http://localhost:5173. (Opening `index.html` directly via `file://` doesn't work for searching: `fetch('modifiers.json')` is blocked.)
 
 ## Deploy to Cloudflare Pages (free)
 
