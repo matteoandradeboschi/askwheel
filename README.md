@@ -1,50 +1,41 @@
 # AskWheel
 
-Alternativa grátis de *search listening*: digite uma palavra-chave e veja, numa busca só, perguntas, preposições, comparações, a–z, 0–9 e buscas relacionadas do autocomplete do Google e do Google Shopping (roda + tabela) e o mapa do People Also Ask do Google. Site estático, sem backend: as consultas vão do navegador do visitante direto para a fonte (JSONP). O People Also Ask é coletado pela extensão [AskWheel PAA](extension/) (automático) ou por um favorito (bookmarklet), na própria página de resultados do Google.
+Free *search listening* alternative: type a keyword and, in a single search, see questions, prepositions, comparisons, a–z, 0–9 and related searches from Google and Google Shopping autocomplete (wheel + table), plus the Google People Also Ask map. Static site, no backend: queries go from the visitor's browser straight to the source (JSONP). People Also Ask is collected by the [AskWheel PAA](extension/) extension (automatic) or by a bookmarklet, on the Google results page itself.
 
-## Estrutura
+## Structure
 
 ```
-extension/              # extensão do navegador que traz o PAA sozinho (vai para o site como public/askwheel-paa.zip)
-public/                 # tudo que vai para o Cloudflare Pages
+extension/              # browser extension that fetches PAA automatically (served by the site as public/askwheel-paa.zip)
+public/                 # everything that goes to Cloudflare Pages
   index.html style.css i18n.js app.js
-  paa.js                # bookmarklet do People Also Ask
-  modifiers.json        # modificadores por idioma (fonte única: site + skill)
-  skill/                # skill opcional para Claude Code, servida pelo próprio site
-    SKILL.md collect.py render.py
+  paa.js                # People Also Ask bookmarklet
+  modifiers.json        # modifiers per language
 ```
 
-## Rodar localmente
+## Run locally
 
 ```bash
 python3 -m http.server 8000 --directory public
 ```
 
-Abra http://localhost:8000. (Abrir `index.html` direto via `file://` não funciona para buscar: o `fetch('modifiers.json')` é bloqueado.)
+Open http://localhost:8000. (Opening `index.html` directly via `file://` doesn't work for searching: `fetch('modifiers.json')` is blocked.)
 
-## Publicar no Cloudflare Pages (grátis)
+## Deploy to Cloudflare Pages (free)
 
-Opção sem instalar nada (recomendada):
+No-install option (recommended):
 
-1. Crie uma conta em https://dash.cloudflare.com.
+1. Create an account at https://dash.cloudflare.com.
 2. **Workers & Pages → Create → Pages → Upload assets**.
-3. Dê um nome ao projeto (vira `<nome>.pages.dev`) e arraste a pasta `public/`.
-4. Para atualizar: **Create new deployment** no mesmo projeto e arraste `public/` de novo.
+3. Name the project (it becomes `<name>.pages.dev`) and drag in the `public/` folder.
+4. To update: **Create new deployment** in the same project and drag `public/` in again.
 
-Opção por linha de comando (baixa o wrangler via npx, não instala globalmente):
+Command-line option (downloads wrangler via npx, no global install):
 
 ```bash
 npx wrangler pages deploy public --project-name askwheel
 ```
 
-## Skill (opcional, sem aba no site)
+## Limitations
 
-A aba de instalação foi removida do site; os arquivos em `public/skill/` continuam no repositório. Ver `IA-futuro.md`.
-
-A skill coleta os mesmos dados (`collect.py`, mesma lógica do `app.js`), acrescenta análise do Claude (intenção, clusters, pautas, perguntas prioritárias) e gera um HTML único reaproveitando o site (`render.py` embute `index.html`, `style.css`, `i18n.js`, `app.js` e os dados). Os dados extras aparecem na aba **Extras (Claude)**.
-
-## Limitações
-
-- Sem volume de busca nem CPC.
-- Endpoint do autocomplete não oficial: pode limitar ou mudar sem aviso.
-- A lógica de agrupamento existe duas vezes (`app.js` e `collect.py`); mudanças precisam ir nas duas.
+- No search volume or CPC.
+- Unofficial autocomplete endpoint: may rate-limit or change without notice.
