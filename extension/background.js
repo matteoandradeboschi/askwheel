@@ -24,8 +24,15 @@ chrome.tabs.onUpdated.addListener(async (tabId, info, t) => {
   if (info.status !== 'complete' || t.url === 'about:blank') return;
   const job = await jobOf(tabId);
   if (!job) return;
-  chrome.scripting.executeScript({ target: { tabId }, func: readPaa }).catch(() => {
-    // Fora de www.google.com (ex.: consent.google.com): mostra a aba para o usuário resolver.
+  chrome.scripting.executeScript({ target: { tabId }, func: readPaa }).catch(async () => {
+    // Falha também em carregamento transitório (url ainda vazia, redirecionamento): espera e confere antes de
+    // incomodar o usuário. Só é tela intermediária (ex.: consent.google.com) se, já carregada, a aba ainda
+    // não está em www.google.com (tab.url só aparece para hosts com permissão).
+    await new Promise((r) => setTimeout(r, 1500));
+    const cur = await chrome.tabs.get(tabId).catch(() => null);
+    if (!cur || cur.status !== 'complete' || !(await jobOf(tabId))) return;
+    if (cur.url?.startsWith('https://www.google.com/')) return chrome.scripting.executeScript({ target: { tabId }, func: readPaa }).catch(() => {});
+    if (cur.url === 'about:blank' || cur.pendingUrl) return;
     show(tabId);
     reply(job, { error: 'blocked' });
   });
