@@ -95,7 +95,7 @@ main { padding: 18px clamp(16px, 3vw, 36px) 80px; }
 @media (pointer: coarse) { #paa-install, .paa-ins { display: none; } }
 @media not (pointer: coarse) { .paa-touch { display: none; } }
 
-.bar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 12px; margin: 18px 0 6px; padding-bottom: 14px; border-bottom: 1px solid var(--line); }
+.bar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 12px; margin: 4px 0 18px; padding: 14px 0; border-bottom: 1px solid var(--line); }
 .views { display: flex; flex-wrap: wrap; gap: 2px; }
 .bar { position: sticky; top: var(--toph); z-index: 5; background: var(--ground); }
 .views a { display: inline-flex; align-items: center; padding: 0 16px; min-height: 44px; border-radius: 999px; font-weight: 500; white-space: nowrap; color: var(--soft); text-decoration: none; }
