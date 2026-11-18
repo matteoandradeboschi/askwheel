@@ -6,84 +6,78 @@
 <title>AskWheel</title>
 <meta name="description" data-i18n-content="meta.desc" content="Veja o que as pessoas buscam no Google e no Google Shopping, e o People Also Ask, sobre qualquer palavra-chave. Grátis, sem cadastro.">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="preload" href="fonts/figtree-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/gabarito-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="style.css">
 </head>
-<body>
-<header class="top">
-  <a class="brand" href="./" data-goto="search">Ask<span>Wheel</span></a>
-  <form id="form" class="search">
-    <input id="q" name="q" type="search" data-i18n-label="q.label" data-i18n-ph="q.ph" aria-label="Palavra-chave" placeholder="Digite uma palavra-chave" autocomplete="off" required>
-    <select id="hl" name="hl" data-i18n-label="hl.label" aria-label="Idioma da busca">
-      <option value="pt">Português</option>
-      <option value="it">Italiano</option>
-      <option value="en">English</option>
-      <option value="es">Español</option>
-    </select>
-    <select id="gl" name="gl" data-i18n-label="gl.label" aria-label="País">
-      <option value="it" data-i18n="c.it">Itália</option>
-      <option value="br" data-i18n="c.br">Brasil</option>
-      <option value="pt" data-i18n="c.pt">Portugal</option>
-      <option value="us" data-i18n="c.us">EUA</option>
-      <option value="gb" data-i18n="c.gb">Reino Unido</option>
-      <option value="es" data-i18n="c.es">Espanha</option>
-      <option value="fr" data-i18n="c.fr">França</option>
-      <option value="de" data-i18n="c.de">Alemanha</option>
-    </select>
-    <button id="go" type="submit" data-i18n="go">Buscar</button>
+<body class="home">
+<header class="top" id="top">
+  <a class="brand" id="brand" href="./" data-i18n-label="brand.label" aria-label="AskWheel, página inicial"><i class="ring" aria-hidden="true"></i>AskWheel</a>
+  <form class="ask" id="form">
+    <h1><label for="q" data-i18n="home.pre">O que as pessoas buscam sobre</label> <input id="q" name="q" data-i18n-ph="q.ph" placeholder="um assunto" autocomplete="off" enterkeyhint="search" required><span aria-hidden="true">?</span></h1>
+    <div class="where">
+      <label><span data-i18n="where.pre">Buscas feitas</span>
+        <select id="hl" name="hl" data-i18n-label="hl.label" aria-label="Idioma da busca">
+          <option value="pt" data-i18n="hl.pt">em português</option>
+          <option value="it" data-i18n="hl.it">em italiano</option>
+          <option value="en" data-i18n="hl.en">em inglês</option>
+          <option value="es" data-i18n="hl.es">em espanhol</option>
+        </select></label>
+      <label><span class="vh" data-i18n="gl.label">País</span>
+        <select id="gl" name="gl" data-i18n-label="gl.label" aria-label="País">
+          <option value="it" data-i18n="c.it">na Itália</option>
+          <option value="br" data-i18n="c.br">no Brasil</option>
+          <option value="pt" data-i18n="c.pt">em Portugal</option>
+          <option value="us" data-i18n="c.us">nos EUA</option>
+          <option value="gb" data-i18n="c.gb">no Reino Unido</option>
+          <option value="es" data-i18n="c.es">na Espanha</option>
+          <option value="fr" data-i18n="c.fr">na França</option>
+          <option value="de" data-i18n="c.de">na Alemanha</option>
+        </select></label>
+      <button class="go" id="go" type="submit" data-i18n="go">Buscar</button>
+    </div>
+    <p class="promise" data-i18n="promise">Grátis, sem cadastro e sem limite de buscas. Os termos vêm do Google na hora, direto do seu navegador.</p>
   </form>
-  <nav class="tabs" data-i18n-label="nav.label" aria-label="Páginas">
-    <button data-tab="ext" class="desk" data-i18n="nav.ext">Extensão PAA</button>
-    <button data-tab="about" data-i18n="nav.about">Como funciona</button>
-    <a class="gh" href="https://github.com/matteoandradeboschi/askwheel" target="_blank" rel="noopener">GitHub</a>
+  <nav class="nav" data-i18n-label="nav.label" aria-label="Páginas">
+    <a href="#" data-tab="about" data-i18n="nav.about">Como funciona</a>
+    <a href="#" data-tab="ext" class="desk" data-i18n="nav.ext">Extensão PAA</a>
+    <a href="https://github.com/matteoandradeboschi/askwheel" target="_blank" rel="noopener">GitHub</a>
     <select id="ui-lang" data-i18n-label="ui.label" aria-label="Idioma do site">
       <option value="pt">PT</option>
       <option value="en">EN</option>
       <option value="it">IT</option>
     </select>
+    <a href="#" class="top-go" data-goto="search" data-i18n="lp.cta">Buscar uma palavra</a>
   </nav>
 </header>
 
 <main>
   <section id="tab-search" class="tab">
-    <div class="hero">
-      <h1 data-i18n="hero.h">O que as pessoas buscam na internet?</h1>
-      <p data-i18n="hero.p" class="muted">Digite uma palavra-chave e veja, numa busca só, o autocomplete do Google e do Google Shopping (perguntas, preposições, comparações, a–z, 0–9, relacionadas) e o mapa do People Also Ask. Grátis, sem cadastro.</p>
-    </div>
-    <div id="status" class="status" aria-live="polite" hidden><div class="bar"><i></i></div><span></span></div>
-
     <div id="results" hidden>
-      <div class="res-head">
-        <h1 id="res-title"></h1>
-        <div class="actions"><button data-i18n="share" id="share" class="ghost">Copiar link</button></div>
+      <div class="cap">
+        <h2 id="cap-kw"></h2>
+        <p class="meta" id="meta" aria-live="polite"></p>
+        <p class="status" id="status" aria-live="polite" hidden></p>
+        <div class="paa-line" id="paa-line" hidden>
+          <p id="paa-msg"></p>
+          <p id="paa-install"><span data-i18n="paa.install">Perguntas do Google (People Also Ask): instale a extensão no computador.</span> <a href="#" data-goto="ext" data-i18n="paa.installBtn">Instalar extensão</a></p>
+        </div>
       </div>
-      <section id="overview" class="panel" hidden>
-        <div class="res-head"><h2 data-i18n="overview">Visão geral</h2></div>
-        <div class="wheel"></div>
-      </section>
-      <div id="panels"></div>
-      <section id="paa" class="panel">
-        <div id="paa-head" class="res-head">
-          <h2>People Also Ask <small id="paa-count"></small></h2>
-          <div class="actions"><button id="paa-svg" class="ghost" hidden>SVG</button><button id="paa-png" class="ghost" hidden>PNG</button><button data-i18n="csv" id="paa-csv" class="ghost" hidden>Baixar CSV</button></div>
+      <div class="bar">
+        <nav class="views" id="views" data-i18n-label="v.label" aria-label="Como ver os termos">
+          <a href="#s-wheel" data-v="wheel" data-i18n="v.wheel">Roda</a><a href="#s-groups" data-v="groups" data-i18n="v.groups">Por assunto</a><a href="#s-qa" data-v="qa" data-i18n="v.qa">Perguntas do Google</a><a href="#s-table" data-v="table" data-i18n="v.table">Tabela</a>
+        </nav>
+        <div class="acts">
+          <button type="button" class="btn" id="copy-all" data-i18n="a.copy">Copiar tudo</button>
+          <button type="button" class="btn" id="csv" data-i18n="csv">Baixar CSV</button>
+          <button type="button" class="btn" id="share" data-i18n="share">Copiar link</button>
+          <button type="button" class="btn" id="print" data-i18n="a.print">Imprimir ou salvar PDF</button>
+          <button type="button" class="btn" id="cart" aria-expanded="false" aria-controls="basket"><span data-i18n="a.cart">Cesta</span> <b id="cart-n">0</b></button>
         </div>
-        <div id="paa-help" class="paa-help">
-          <div id="paa-prog" class="status" hidden><div class="bar"><i></i></div><span></span></div>
-          <p id="paa-msg" aria-live="polite" hidden></p>
-          <div id="paa-install" class="paa-line">
-            <p data-i18n="paa.install"><b>Mapa de perguntas</b> <span class="muted">(People Also Ask): instale a extensão no computador.</span></p>
-            <a data-i18n="paa.installBtn" class="ghost" href="#" data-goto="ext">Instalar extensão</a>
-          </div>
-        </div>
-        <div id="paa-map" class="map" hidden></div>
-      </section>
-      <section id="list" class="panel" hidden>
-        <div class="res-head">
-          <h2><span data-i18n="list.title">Todas as sugestões</span> <small id="list-count"></small></h2>
-          <div class="actions"><input id="list-q" type="search" data-i18n-ph="list.ph" data-i18n-label="list.label" placeholder="Filtrar" aria-label="Filtrar sugestões"></div>
-        </div>
-        <div id="list-groups" class="chips"></div>
-        <div class="list-wrap"><table class="list"><thead><tr><th data-i18n="th.sug">Sugestão</th><th data-i18n="th.src">Fonte</th><th data-i18n="th.mod">Modificador</th></tr></thead><tbody></tbody></table></div>
-      </section>
+      </div>
+      <div id="stage"></div>
+      <div id="extras" hidden></div>
+      <p class="note" data-i18n="note.vol">Não mostramos volume de busca: o Google não entrega esse número de graça. A ordem é a posição em que o Google sugeriu cada termo, não quantas pessoas pesquisam.</p>
     </div>
   </section>
 
@@ -112,33 +106,206 @@
     </ol>
   </section>
 
-  <section id="tab-about" class="tab prose" hidden>
-    <h1 data-i18n="about.h">Como funciona</h1>
-    <ol>
-      <li data-i18n="about.1">A palavra-chave é combinada com modificadores no idioma escolhido: perguntas (<i>como, por que, qual…</i>), preposições (<i>para, com, sem…</i>), comparações (<i>vs, ou…</i>), letras a–z e números 0–9.</li>
-      <li data-i18n="about.2">Cada combinação é enviada ao autocomplete do Google e do Google Shopping <b>direto do seu navegador</b> (cerca de 140 consultas).</li>
-      <li data-i18n="about.3">O People Also Ask é lido na própria página de resultados do Google pela extensão <b>AskWheel PAA</b> (ou por um favorito), que abre as perguntas numa aba em segundo plano e as traz como um mapa.</li>
-      <li data-i18n="about.4">As sugestões são agrupadas por modificador. O que não se encaixa em nenhum vai para <b>Relacionadas</b>.</li>
-    </ol>
-    <h2 data-i18n="about.limH">Limitações</h2>
-    <ul>
-      <li data-i18n="about.lim1">Sem volume de busca nem CPC: não existe fonte gratuita para esses dados.</li>
-      <li data-i18n="about.lim2">Usa endpoints não oficiais, que podem mudar ou limitar sem aviso.</li>
-      <li data-i18n="about.lim3">Os resultados variam por idioma, país e momento.</li>
-      <li data-i18n="about.lim4">Francês e alemão ainda não têm modificadores: para França e Alemanha, escolha o idioma English (outros idiomas usam os modificadores em inglês).</li>
-      <li data-i18n="about.lim5">Bloqueadores de anúncio podem impedir as consultas.</li>
-      <li data-i18n="about.lim6">Amazon, TikTok e Google Trends não estão aqui: bloqueiam consultas do navegador (CORS).</li>
-      <li data-i18n="about.lim7">Instagram exige login.</li>
-      <li data-i18n="about.lim8">People Also Ask só existe na página de resultados do Google: a coleta roda lá, pela extensão ou pelo favorito <b>AskWheel PAA</b>. Precisa de computador e só funciona quando o Google mostra a caixa.</li>
-    </ul>
-    <h2 data-i18n="about.privH">Privacidade</h2>
-    <p data-i18n="about.privP">O site é estático: não tem servidor, cadastro nem analytics. As consultas vão do seu navegador direto para o Google.</p>
+  <section id="tab-about" class="tab lp" hidden>
+    <div class="lp-sec lp-hero">
+      <div class="lp-text">
+        <h1 data-i18n="lp.h1">Veja o que as pessoas perguntam no Google sobre qualquer assunto</h1>
+        <p class="lp-lead" data-i18n="lp.lead">Digite uma palavra. O AskWheel consulta o autocomplete do Google e do Google Shopping direto do seu navegador e separa cada sugestão em perguntas, comparações, para quê e com o quê, e de A a Z.</p>
+        <div class="lp-btns"><a class="lp-go" href="#" data-goto="search" data-i18n="lp.cta">Buscar uma palavra</a><a class="lp-alt desk" href="#" data-goto="ext" data-i18n="lp.cta2">Instalar a extensão</a></div>
+        <p class="lp-proof" data-i18n="lp.proof">Grátis, sem cadastro e sem limite de buscas.</p>
+      </div>
+      <div class="lp-art" role="img" data-i18n-label="lp.artLabel" aria-label="Resultado do AskWheel para cold brew">
+        <div class="aw-win" aria-hidden="true">
+          <div class="aw-bar"><span class="aw-dots"><i></i><i></i><i></i></span><span>AskWheel · <b>cold brew</b> · <span data-i18n="hl.en">em inglês</span></span></div>
+          <div class="aw-body">
+            <div class="aw-side">
+              <span class="hue h-questions on"><i></i><span data-i18n="g.questions">Perguntas</span><em>48</em></span>
+              <span class="hue h-prepositions"><i></i><span data-i18n="g.prepositions">Para quê e com o quê</span><em>31</em></span>
+              <span class="hue h-comparisons"><i></i><span data-i18n="g.comparisons">Comparações</span><em>12</em></span>
+              <span class="hue h-az"><i></i><span data-i18n="g.az">De A a Z e números</span><em>83</em></span>
+              <span class="hue h-related"><i></i><span data-i18n="g.related">Relacionadas</span><em>26</em></span>
+            </div>
+            <ul class="aw-rows hue h-questions">
+              <li><b>how to make <mark>cold brew</mark> at home</b><small>how</small></li>
+              <li><b>is <mark>cold brew</mark> stronger than coffee</b><small>is</small></li>
+              <li><b>why is <mark>cold brew</mark> so expensive</b><small>why</small></li>
+              <li><b>how long does <mark>cold brew</mark> last</b><small>how</small></li>
+              <li><b>what is <mark>cold brew</mark> concentrate</b><small>what</small></li>
+              <li><b>can you heat up <mark>cold brew</mark></b><small>can</small></li>
+              <li><b>which beans for <mark>cold brew</mark></b><small>which</small></li>
+              <li><b>does <mark>cold brew</mark> have more caffeine</b><small>does</small></li>
+            </ul>
+          </div>
+        </div>
+        <div class="aw-note" aria-hidden="true">
+          <b data-i18n="g.paa">Perguntas do Google</b>
+          <p><i>1</i><span data-i18n="lp.note1">Google aberto numa aba em segundo plano</span></p>
+          <p><i>2</i><span data-i18n="lp.note2">8 perguntas lidas da página</span></p>
+          <p><i>3</i><span data-i18n="lp.note3">Mapa pronto para cold brew</span></p>
+        </div>
+      </div>
+    </div>
+
+    <div class="lp-sec">
+      <div class="lp-head">
+        <h2 data-i18n="lp.wheelH">Todas as sugestões de uma palavra, numa roda só</h2>
+        <p data-i18n="lp.wheelP">Google e Google Shopping respondem lado a lado. A roda agrupa as sugestões pela palavra que as começa; a tabela lista cada uma para copiar com um clique.</p>
+      </div>
+      <div class="lp-app" role="img" data-i18n-label="lp.appLabel" aria-label="Tabela de sugestões ao lado da roda">
+        <ul class="aw-rows lp-list" aria-hidden="true">
+          <li class="hue h-comparisons"><b>cold brew vs iced coffee</b><small>vs</small></li>
+          <li class="hue h-prepositions"><b>cold brew with milk</b><small>with</small></li>
+          <li class="hue h-questions"><b>how to make cold brew at home</b><small>how</small></li>
+          <li class="hue h-az"><b>cold brew ratio</b><small>r</small></li>
+          <li class="hue h-az"><b>cold brew 1 litre</b><small>1</small></li>
+          <li class="hue h-comparisons"><b>cold brew or espresso</b><small>or</small></li>
+          <li class="hue h-prepositions"><b>cold brew without filter</b><small>without</small></li>
+          <li class="hue h-related"><b>cold brew tonic</b><small>+</small></li>
+          <li class="hue h-az"><b>cold brew grind size</b><small>g</small></li>
+          <li class="hue h-prepositions"><b>cold brew near me</b><small>near</small></li>
+        </ul>
+        <div class="lp-wheelbox"><svg class="lp-wheel" viewBox="0 0 500 500" aria-hidden="true"><g class="hue h-questions"><path class="bd" d="M250.0 100.0A150 150 0 0 1 399.7 240.6L313.9 246.0A64 64 0 0 0 250.0 186.0Z"/><path class="lf o0" d="M250.0 54.0A196 196 0 0 1 274.6 55.5L268.8 101.2A150 150 0 0 0 250.0 100.0Z"/><path class="lf o1" d="M277.1 35.7A216 216 0 0 1 303.7 40.8L287.3 104.7A150 150 0 0 0 268.8 101.2Z"/><path class="lf o2" d="M308.7 21.4A236 236 0 0 1 336.9 30.6L305.2 110.5A150 150 0 0 0 287.3 104.7Z"/><path class="lf o0" d="M325.8 58.5A206 206 0 0 1 349.2 69.5L322.3 118.6A150 150 0 0 0 305.2 110.5Z"/><path class="lf o1" d="M358.9 52.0A226 226 0 0 1 382.8 67.2L338.2 128.6A150 150 0 0 0 322.3 118.6Z"/><path class="lf o2" d="M365.2 91.4A196 196 0 0 1 384.2 107.1L352.7 140.7A150 150 0 0 0 338.2 128.6Z"/><path class="lf o0" d="M397.9 92.5A216 216 0 0 1 416.4 112.3L365.6 154.4A150 150 0 0 0 352.7 140.7Z"/><path class="lf o1" d="M431.8 99.6A236 236 0 0 1 449.3 123.5L376.6 169.6A150 150 0 0 0 365.6 154.4Z"/><path class="lf o2" d="M423.9 139.6A206 206 0 0 1 436.4 162.3L385.7 186.1A150 150 0 0 0 376.6 169.6Z"/><path class="lf o0" d="M454.5 153.8A226 226 0 0 1 464.9 180.2L392.7 203.6A150 150 0 0 0 385.7 186.1Z"/><path class="lf o1" d="M436.4 189.4A196 196 0 0 1 442.5 213.3L397.3 221.9A150 150 0 0 0 392.7 203.6Z"/><path class="lf o2" d="M462.2 209.5A216 216 0 0 1 465.6 236.4L399.7 240.6A150 150 0 0 0 397.3 221.9Z"/></g><g class="hue h-prepositions"><path class="bd" d="M399.7 240.6A150 150 0 0 1 341.9 368.5L289.2 300.6A64 64 0 0 0 313.9 246.0Z"/><path class="lf o0" d="M445.6 237.7A196 196 0 0 1 445.7 261.5L399.7 258.8A150 150 0 0 0 399.7 240.6Z"/><path class="lf o1" d="M465.6 262.7A216 216 0 0 1 462.5 288.8L397.6 276.9A150 150 0 0 0 399.7 258.8Z"/><path class="lf o2" d="M482.2 292.4A236 236 0 0 1 475.3 320.3L393.2 294.7A150 150 0 0 0 397.6 276.9Z"/><path class="lf o0" d="M446.7 311.3A206 206 0 0 1 437.7 334.8L386.7 311.7A150 150 0 0 0 393.2 294.7Z"/><path class="lf o1" d="M456.0 343.0A226 226 0 0 1 443.2 367.3L378.2 327.9A150 150 0 0 0 386.7 311.7Z"/><path class="lf o2" d="M417.5 351.8A196 196 0 0 1 403.9 371.3L367.8 342.9A150 150 0 0 0 378.2 327.9Z"/><path class="lf o0" d="M419.6 383.7A216 216 0 0 1 402.1 403.3L355.6 356.5A150 150 0 0 0 367.8 342.9Z"/><path class="lf o1" d="M416.2 417.5A236 236 0 0 1 394.6 436.5L341.9 368.5A150 150 0 0 0 355.6 356.5Z"/></g><g class="hue h-comparisons"><path class="bd" d="M341.9 368.5A150 150 0 0 1 291.8 394.0L267.9 311.5A64 64 0 0 0 289.2 300.6Z"/><path class="lf o0" d="M370.1 404.9A196 196 0 0 1 349.8 418.7L326.4 379.1A150 150 0 0 0 341.9 368.5Z"/><path class="lf o1" d="M360.0 435.9A216 216 0 0 1 335.8 448.2L309.6 387.7A150 150 0 0 0 326.4 379.1Z"/><path class="lf o2" d="M343.7 466.6A236 236 0 0 1 315.8 476.6L291.8 394.0A150 150 0 0 0 309.6 387.7Z"/></g><g class="hue h-az"><path class="bd" d="M291.8 394.0A150 150 0 0 1 140.7 147.3L203.3 206.2A64 64 0 0 0 267.9 311.5Z"/><path class="lf o0" d="M304.7 438.2A196 196 0 0 1 281.0 443.5L273.7 398.1A150 150 0 0 0 291.8 394.0Z"/><path class="lf o1" d="M284.1 463.3A216 216 0 0 1 257.4 465.9L255.2 399.9A150 150 0 0 0 273.7 398.1Z"/><path class="lf o2" d="M258.1 485.9A236 236 0 0 1 228.8 485.0L236.6 399.4A150 150 0 0 0 255.2 399.9Z"/><path class="lf o0" d="M231.5 455.2A206 206 0 0 1 206.3 451.3L218.2 396.6A150 150 0 0 0 236.6 399.4Z"/><path class="lf o1" d="M202.0 470.8A226 226 0 0 1 175.0 463.2L200.2 391.5A150 150 0 0 0 218.2 396.6Z"/><path class="lf o2" d="M185.0 434.9A196 196 0 0 1 162.6 425.4L183.1 384.3A150 150 0 0 0 200.2 391.5Z"/><path class="lf o0" d="M153.7 443.3A216 216 0 0 1 130.5 429.9L167.0 374.9A150 150 0 0 0 183.1 384.3Z"/><path class="lf o1" d="M119.4 446.6A236 236 0 0 1 96.1 428.9L152.2 363.7A150 150 0 0 0 167.0 374.9Z"/><path class="lf o2" d="M115.6 406.1A206 206 0 0 1 97.3 388.3L138.8 350.7A150 150 0 0 0 152.2 363.7Z"/><path class="lf o0" d="M82.5 401.7A226 226 0 0 1 65.0 379.8L127.2 336.2A150 150 0 0 0 138.8 350.7Z"/><path class="lf o1" d="M89.6 362.6A196 196 0 0 1 76.9 341.8L117.5 320.3A150 150 0 0 0 127.2 336.2Z"/><path class="lf o2" d="M59.2 351.2A216 216 0 0 1 48.1 326.8L109.8 303.3A150 150 0 0 0 117.5 320.3Z"/><path class="lf o0" d="M29.4 333.9A236 236 0 0 1 20.7 306.0L104.3 285.6A150 150 0 0 0 109.8 303.3Z"/><path class="lf o1" d="M49.9 298.8A206 206 0 0 1 45.4 273.7L101.0 267.2A150 150 0 0 0 104.3 285.6Z"/><path class="lf o2" d="M25.5 276.0A226 226 0 0 1 24.0 248.0L100.0 248.7A150 150 0 0 0 101.0 267.2Z"/><path class="lf o0" d="M54.0 248.2A196 196 0 0 1 55.7 224.0L101.3 230.1A150 150 0 0 0 100.0 248.7Z"/><path class="lf o1" d="M35.9 221.3A216 216 0 0 1 41.1 195.0L104.9 211.8A150 150 0 0 0 101.3 230.1Z"/><path class="lf o2" d="M21.8 189.9A236 236 0 0 1 31.0 162.1L110.8 194.2A150 150 0 0 0 104.9 211.8Z"/><path class="lf o0" d="M58.8 173.3A206 206 0 0 1 69.8 150.2L118.8 177.3A150 150 0 0 0 110.8 194.2Z"/><path class="lf o1" d="M52.3 140.5A226 226 0 0 1 67.4 116.9L128.8 161.7A150 150 0 0 0 118.8 177.3Z"/><path class="lf o2" d="M91.6 134.6A196 196 0 0 1 107.1 115.8L140.7 147.3A150 150 0 0 0 128.8 161.7Z"/></g><g class="hue h-related"><path class="bd" d="M140.7 147.3A150 150 0 0 1 250.0 100.0L250.0 186.0A64 64 0 0 0 203.3 206.2Z"/><path class="lf o0" d="M107.1 115.8A196 196 0 0 1 123.7 100.1L153.4 135.3A150 150 0 0 0 140.7 147.3Z"/><path class="lf o1" d="M110.8 84.8A216 216 0 0 1 131.0 69.7L167.4 124.8A150 150 0 0 0 153.4 135.3Z"/><path class="lf o2" d="M120.0 53.0A236 236 0 0 1 143.8 39.2L182.5 116.0A150 150 0 0 0 167.4 124.8Z"/><path class="lf o0" d="M157.3 66.0A206 206 0 0 1 179.4 56.5L198.6 109.1A150 150 0 0 0 182.5 116.0Z"/><path class="lf o1" d="M172.5 37.7A226 226 0 0 1 197.7 30.1L215.3 104.1A150 150 0 0 0 198.6 109.1Z"/><path class="lf o2" d="M204.7 59.3A196 196 0 0 1 227.2 55.3L232.5 101.0A150 150 0 0 0 215.3 104.1Z"/><path class="lf o0" d="M224.9 35.5A216 216 0 0 1 250.0 34.0L250.0 100.0A150 150 0 0 0 232.5 101.0Z"/></g><circle class="hub" cx="250" cy="250" r="62"/><text class="kw" x="250" y="246">cold brew</text><text class="kn" x="250" y="270">200</text></svg></div>
+      </div>
+    </div>
+
+    <div class="lp-sec lp-pin" id="lp-steps">
+      <div class="lp-pin__in">
+        <div class="lp-pin__text">
+          <h2 data-i18n="lp.stepsH">Como funciona uma busca</h2>
+          <ol class="lp-steps">
+            <li class="is-on">
+              <h3 data-i18n="lp.s1h">Digite a palavra e escolha o idioma</h3>
+              <p data-i18n="lp.s1p">O idioma da busca é separado do idioma do site: dá para usar o site em italiano e buscar em português.</p>
+              <figure class="lp-shot" aria-hidden="true"><div class="ps-win">
+                <div class="ps-bar"><span class="aw-dots"><i></i><i></i><i></i></span>AskWheel</div>
+                <div class="ps-search"><svg viewBox="0 0 20 20"><circle cx="9" cy="9" r="6"/><path d="m14 14 4 4"/></svg>cold brew<em data-i18n="hl.en">em inglês</em><b data-i18n="go">Buscar</b></div>
+                <div class="aw-chips ps-mods"><span class="hue h-questions">how</span><span class="hue h-questions">why</span><span class="hue h-questions">what</span><span class="hue h-prepositions">with</span><span class="hue h-prepositions">for</span><span class="hue h-comparisons">vs</span><span class="hue h-comparisons">or</span><span class="hue h-az">a–z</span><span class="hue h-az">0–9</span></div>
+              </div></figure>
+            </li>
+            <li>
+              <h3 data-i18n="lp.s2h">Veja cada fonte chegar</h3>
+              <p data-i18n="lp.s2p">Google e Google Shopping aparecem com a sua contagem, assim você sabe quem respondeu e quantos termos trouxe.</p>
+              <figure class="lp-shot" aria-hidden="true"><div class="ps-win">
+                <div class="ps-bar"><span class="aw-dots"><i></i><i></i><i></i></span>AskWheel · <b>cold brew</b></div>
+                <div class="ps-cols">
+                  <div><h4><img src="icons/google-icon.svg" alt="" width="16" height="16">Google<em>164</em></h4><i class="aw-meter"></i><p>cold brew vs iced coffee</p><p>cold brew ratio</p><p>cold brew with milk</p><p>cold brew recipe</p></div>
+                  <div><h4><img src="icons/google-icon.svg" alt="" width="16" height="16">Shopping<em>36</em></h4><i class="aw-meter part"></i><p>cold brew maker</p><p>cold brew bottle 1 litre</p><p>cold brew filter bags</p><p>cold brew concentrate</p></div>
+                </div>
+              </div></figure>
+            </li>
+            <li>
+              <h3 data-i18n="lp.s3h">Copie um termo ou exporte tudo</h3>
+              <p data-i18n="lp.s3p">Copie uma sugestão, guarde na cesta de uma busca para a outra ou baixe um CSV com a palavra, o idioma e a data.</p>
+              <figure class="lp-shot" aria-hidden="true"><div class="ps-win">
+                <div class="ps-bar"><span class="aw-dots"><i></i><i></i><i></i></span><span data-i18n="a.cart">Cesta</span> · <b>3</b></div>
+                <ul class="aw-rows">
+                  <li class="hue h-questions"><b>how to make cold brew at home</b><small>how</small></li>
+                  <li class="hue h-comparisons"><b>cold brew vs iced coffee</b><small>vs</small></li>
+                  <li class="hue h-related"><b>cold brew maker</b><small>Shopping</small></li>
+                </ul>
+                <div class="ps-file"><img src="icons/google-sheets.svg" alt="" width="21" height="28"><span><b>askwheel-cold-brew.csv</b><br><span data-i18n="lp.csvCols">palavra, idioma, data</span></span><em data-i18n="csv">Baixar CSV</em></div>
+              </div></figure>
+            </li>
+          </ol>
+        </div>
+      </div>
+    </div>
+
+    <div class="lp-sec lp-split">
+      <div class="lp-head">
+        <h2 data-i18n="lp.paaH">Perguntas do Google, lidas de uma página real</h2>
+        <p data-i18n="lp.paaP">A extensão abre o Google numa aba em segundo plano, lê o quadro “As pessoas também perguntam” e traz o mapa para cá. Sem extensão, um favorito clicado no google.com faz o mesmo. Só no computador.</p>
+        <div class="lp-chips"><span><img src="icons/chrome.svg" alt="" width="20" height="20">Chrome</span><span><img src="icons/firefox.svg" alt="" width="20" height="20">Firefox</span></div>
+      </div>
+      <div class="lp-map hue h-paa" role="img" data-i18n-label="lp.mapLabel" aria-label="Mapa de perguntas do Google para cold brew">
+        <svg viewBox="0 0 680 440" aria-hidden="true">
+          <path d="M120 220 C160 220 160 60 200 60"/><path d="M120 220 C160 220 160 170 200 170"/><path d="M120 220 C160 220 160 280 200 280"/><path d="M120 220 C160 220 160 390 200 390"/>
+          <path d="M420 60 C440 60 440 32 460 32"/><path d="M420 60 C440 60 440 88 460 88"/><path d="M420 170 C440 170 440 142 460 142"/><path d="M420 170 C440 170 440 198 460 198"/>
+          <path d="M420 280 C440 280 440 252 460 252"/><path d="M420 280 C440 280 440 308 460 308"/><path d="M420 390 C440 390 440 362 460 362"/><path d="M420 390 C440 390 440 418 460 418"/>
+          <rect class="root" x="16" y="198" width="104" height="44" rx="22"/><text class="rt" x="34" y="221">cold brew</text>
+          <rect x="200" y="42" width="220" height="36" rx="8"/><text x="212" y="61">Is cold brew healthier?</text>
+          <rect x="200" y="152" width="220" height="36" rx="8"/><text x="212" y="171">How long to steep cold brew?</text>
+          <rect x="200" y="262" width="220" height="36" rx="8"/><text x="212" y="281">Is cold brew just iced coffee?</text>
+          <rect x="200" y="372" width="220" height="36" rx="8"/><text x="212" y="391">Why does cold brew cost more?</text>
+          <rect x="460" y="18" width="204" height="28" rx="6"/><text x="470" y="33">Is it easier on the stomach?</text>
+          <rect x="460" y="74" width="204" height="28" rx="6"/><text x="470" y="89">Does it have less acid?</text>
+          <rect x="460" y="128" width="204" height="28" rx="6"/><text x="470" y="143">Can you steep it too long?</text>
+          <rect x="460" y="184" width="204" height="28" rx="6"/><text x="470" y="199">Fridge or room temperature?</text>
+          <rect x="460" y="238" width="204" height="28" rx="6"/><text x="470" y="253">What makes it different?</text>
+          <rect x="460" y="294" width="204" height="28" rx="6"/><text x="470" y="309">Is it sweeter?</text>
+          <rect x="460" y="348" width="204" height="28" rx="6"/><text x="470" y="363">How much coffee does it use?</text>
+          <rect x="460" y="404" width="204" height="28" rx="6"/><text x="470" y="419">Is it worth making at home?</text>
+        </svg>
+      </div>
+    </div>
+
+    <div class="lp-sec">
+      <div class="lp-head">
+        <h2 data-i18n="lp.expH">Leve os termos para onde você trabalha</h2>
+        <p data-i18n="lp.expP">Três fontes viram uma lista. Um CSV ou um clique em copiar leva tudo para uma planilha, uma página ou um grupo de anúncios.</p>
+      </div>
+      <div class="lp-dg">
+        <svg class="lp-dg__svg" viewBox="0 0 1200 480" role="img" data-i18n-label="lp.flowLabel" aria-label="Google, Google Shopping e as perguntas do Google entram no AskWheel e saem para Google Sheets, Excel, Notion e Google Ads">
+          <g class="ln">
+            <path id="dg-s1" d="M440 160 C500 160 490 240 540 240"/><path id="dg-s2" d="M440 240 L540 240"/><path id="dg-s3" d="M440 320 C500 320 490 240 540 240"/>
+            <path id="dg-t1" d="M660 240 C720 240 710 105 770 105"/><path id="dg-t2" d="M660 240 C720 240 710 195 770 195"/><path id="dg-t3" d="M660 240 C720 240 710 285 770 285"/><path id="dg-t4" d="M660 240 C720 240 710 375 770 375"/>
+          </g>
+          <g class="pulse">
+            <circle r="4"><animateMotion dur="2.8s" repeatCount="indefinite" begin="0s"><mpath href="#dg-s1"/></animateMotion></circle>
+            <circle r="4"><animateMotion dur="2.8s" repeatCount="indefinite" begin=".9s"><mpath href="#dg-s2"/></animateMotion></circle>
+            <circle r="4"><animateMotion dur="2.8s" repeatCount="indefinite" begin="1.8s"><mpath href="#dg-s3"/></animateMotion></circle>
+            <circle r="4"><animateMotion dur="2.8s" repeatCount="indefinite" begin=".5s"><mpath href="#dg-t1"/></animateMotion></circle>
+            <circle r="4"><animateMotion dur="2.8s" repeatCount="indefinite" begin="1.2s"><mpath href="#dg-t2"/></animateMotion></circle>
+            <circle r="4"><animateMotion dur="2.8s" repeatCount="indefinite" begin="1.9s"><mpath href="#dg-t3"/></animateMotion></circle>
+            <circle r="4"><animateMotion dur="2.8s" repeatCount="indefinite" begin="2.6s"><mpath href="#dg-t4"/></animateMotion></circle>
+          </g>
+          <g class="nd"><rect x="250" y="130" width="190" height="60" rx="12"/><rect class="tile" x="262" y="142" width="36" height="36" rx="8"/><image href="icons/google-icon.svg" x="270" y="150" width="20" height="20"/><text x="310" y="157">Google</text><text class="sub" x="310" y="176">Autocomplete</text></g>
+          <g class="nd"><rect x="250" y="210" width="190" height="60" rx="12"/><rect class="tile" x="262" y="222" width="36" height="36" rx="8"/><image href="icons/google-icon.svg" x="270" y="230" width="20" height="20"/><text x="310" y="237">Shopping</text><text class="sub" x="310" y="256">Autocomplete</text></g>
+          <g class="nd hue h-paa"><rect x="210" y="290" width="230" height="60" rx="12"/><rect class="tile" x="222" y="302" width="36" height="36" rx="8"/><circle class="dot" cx="240" cy="320" r="7"/><text x="270" y="317" data-i18n="g.paa">Perguntas do Google</text><text class="sub" x="270" y="336">People Also Ask</text></g>
+          <g class="core"><rect class="halo" x="530" y="170" width="140" height="140" rx="26"/><rect x="540" y="180" width="120" height="120" rx="20"/><path transform="translate(582 200) scale(1.5)" d="M2.5 21.5V12a9.5 9.5 0 0 1 19 0v9.5h-6V12a3.5 3.5 0 0 0-7 0v9.5z"/><text x="600" y="276">AskWheel</text></g>
+          <g class="nd"><rect x="770" y="75" width="210" height="60" rx="12"/><rect class="tile" x="782" y="87" width="36" height="36" rx="8"/><image href="icons/google-sheets.svg" x="792" y="94" width="16" height="22"/><text x="830" y="102">Google Sheets</text><text class="sub" x="830" y="121">CSV</text></g>
+          <g class="nd"><rect x="770" y="165" width="210" height="60" rx="12"/><rect class="tile" x="782" y="177" width="36" height="36" rx="8"/><image href="icons/xlsx.svg" x="789" y="184" width="22" height="22"/><text x="830" y="192">Excel</text><text class="sub" x="830" y="211">CSV</text></g>
+          <g class="nd"><rect x="770" y="255" width="210" height="60" rx="12"/><rect class="tile" x="782" y="267" width="36" height="36" rx="8"/><image href="icons/notion.svg" x="790" y="275" width="20" height="20"/><text x="830" y="282">Notion</text><text class="sub" x="830" y="301" data-i18n="lp.subCopy">Copiar</text></g>
+          <g class="nd"><rect x="770" y="345" width="210" height="60" rx="12"/><rect class="tile" x="782" y="357" width="36" height="36" rx="8"/><image href="icons/google-ads.svg" x="790" y="365" width="20" height="20"/><text x="830" y="372">Google Ads</text><text class="sub" x="830" y="391" data-i18n="lp.subKw">Palavras-chave</text></g>
+        </svg>
+        <button type="button" class="lp-pause" id="lp-pause" data-i18n-label="lp.pause" aria-label="Pausar animação" aria-pressed="false"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M5 3v10M11 3v10"/></svg></button>
+      </div>
+      <div class="lp-flow">
+        <ul><li><img src="icons/google-icon.svg" alt="" width="20" height="20">Google</li><li><img src="icons/google-icon.svg" alt="" width="20" height="20">Google Shopping</li><li class="hue h-paa"><i class="dot"></i><span data-i18n="g.paa">Perguntas do Google</span></li></ul>
+        <div class="lp-core"><i class="ring" aria-hidden="true"></i>AskWheel</div>
+        <ul><li><img src="icons/google-sheets.svg" alt="" width="15" height="20">Google Sheets</li><li><img src="icons/xlsx.svg" alt="" width="20" height="20">Excel</li><li><img src="icons/notion.svg" alt="" width="20" height="20">Notion</li><li><img src="icons/google-ads.svg" alt="" width="20" height="20">Google Ads</li></ul>
+      </div>
+    </div>
+
+    <div class="lp-sec lp-split">
+      <div class="lp-head"><h2 data-i18n="lp.faqH">Dúvidas</h2><p data-i18n="lp.faqP">O que o AskWheel mostra, o que ele não alcança e para onde vai a sua busca.</p></div>
+      <div class="lp-faq">
+        <div><h3 data-i18n="lp.q1">Custa alguma coisa?</h3><p data-i18n="lp.a1"></p></div>
+        <div><h3 data-i18n="lp.q2">Mostra o volume de busca?</h3><p data-i18n="lp.a2"></p></div>
+        <div><h3 data-i18n="lp.q3">Por que não tem Amazon nem TikTok?</h3><p data-i18n="lp.a3"></p></div>
+        <div><h3 data-i18n="lp.q4">Minha busca fica guardada?</h3><p data-i18n="lp.a4"></p></div>
+        <div><h3 data-i18n="lp.q5">Em que idiomas posso buscar?</h3><p data-i18n="lp.a5"></p></div>
+        <div><h3 data-i18n="lp.q6">Às vezes não aparece nada. Por quê?</h3><p data-i18n="lp.a6"></p></div>
+      </div>
+    </div>
+
+    <div class="lp-sec lp-close">
+      <h2 data-i18n="lp.closeH">Busque a sua primeira palavra</h2>
+      <a class="lp-go lp-xl" href="#" data-goto="search" data-i18n="lp.cta">Buscar uma palavra</a>
+    </div>
   </section>
 </main>
 
-<footer data-i18n="footer" class="foot muted">AskWheel · grátis e de código aberto · dados do autocomplete do Google e do Google Shopping e do People Also Ask</footer>
+<aside class="basket" id="basket" data-i18n-label="a.cart" aria-label="Cesta">
+  <h2><span data-i18n="a.cart">Cesta</span> <button type="button" class="btn" id="b-close" data-i18n="b.close">Fechar</button></h2>
+  <p class="empty" id="b-empty" data-i18n="b.empty">Clique num termo para guardar aqui. A cesta continua de uma busca para a outra.</p>
+  <ol id="b-list"></ol>
+  <div class="row"><button type="button" class="btn" id="b-copy" data-i18n="b.copy">Copiar cesta</button><button type="button" class="btn" id="b-csv" data-i18n="csv">Baixar CSV</button><button type="button" class="btn" id="b-clear" data-i18n="b.clear">Esvaziar cesta</button></div>
+</aside>
+<div class="toast" id="toast" role="status"></div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js" integrity="sha512-vc58qvvBdrDR4etbxMdlTt4GBQk1qjvyORR2nrsPsFPyrs+/u5c3+1Ct6upOgdZoIl7eq6k3a1UPDSNAQi/32A==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<footer data-i18n="footer" class="foot">AskWheel · grátis e de código aberto · dados do autocomplete do Google e do Google Shopping e do People Also Ask</footer>
+
 <script src="i18n.js"></script>
 <script src="app.js"></script>
 </body>
