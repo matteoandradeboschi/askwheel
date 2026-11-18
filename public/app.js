@@ -42,7 +42,7 @@ function lean(list, b) {
   // e, em "relacionadas", o que nem contém a keyword. Se sobrar nada, vale a lista inteira.
   const junk = (it) => {
     const w = norm(it.t).split(' '), rest = w.filter((x) => !kw.split(' ').includes(x));
-    return (w.length > 1 && /^[a-z]$/.test(w.at(-1))) || (k0.length >= 5 && rest.length === 1 && w.length > 1 && rest[0] !== k0 && rest[0].slice(0, 5) === k0.slice(0, 5))
+    return (b === 'az' && w.length > 1 && /^[a-z]$/.test(w.at(-1))) || (k0 === kw && k0.length >= 5 && rest.length === 1 && w.length > 1 && rest[0] !== k0 && Math.abs(rest[0].length - k0.length) <= 1 && rest[0].slice(0, 5) === k0.slice(0, 5))
       || (b === 'related' && !hasKeyword(it.t, state.keyword));
   };
   const pool = list.filter((it) => !junk(it)), src = pool.length ? pool : list;
@@ -236,9 +236,9 @@ function viewGroups() {
     const mods = modsOf(b);
     if (!mods.length) return '';
     const n = mods.reduce((s, [, l]) => s + l.length, 0);
-    const body = mods.map(([name, list], mi) => {
+    const body = mods.map(([name, list]) => {
       if (b === 'paa') return `<div class="mod">${term(list[0])}${list.length > 1 ? `<div class="kids">${list.slice(1).map(term).join('')}</div>` : ''}</div>`;
-      const key = `${b}|${mi}`, cut = ui.all || ui.open.has(key) ? list : lean(list, b).slice(0, CAP[b] ?? CUT), rest = list.length - cut.length;
+      const key = `${b}|${name}`, cut = ui.all || ui.open.has(key) ? list : lean(list, b).slice(0, CAP[b] ?? CUT), rest = list.length - cut.length;
       return `<div class="mod">${name ? `<h4>${esc(name)}</h4>` : ''}${cut.map(term).join('')}${rest ? `<button type="button" class="more" data-more="${key}">${t('more', { n: rest })}</button>` : ''}</div>`;
     }).join('');
     return `<section class="group hue h-${b}"><header><h3>${t(`g.${b}`)}<span>${n}</span></h3><p>${t(`d.${b}`)}</p></header><div class="mods">${body}</div></section>`;
